@@ -2,6 +2,10 @@
 
 Removes ads from MyAnimeList and provides a nice little "Find on 9Anime" button which searches for the anime so you can watch it even faster.
 
+## Install
+
+Latest: [Version 1.2](https://cdn.rawgit.com/siku2/InScripts/scripts/MAL+/MALplus.user.js)
+
 ### Styles
 
 In the future I might try to pump up MAL's CSS a little bit. Right now you can already use the `Arrow` theme for your anime list. Which looks something like this:
