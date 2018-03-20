@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name     SpriteClub AutoBet
 // @icon     https://static-cdn.jtvnw.net/jtv_user_pictures/f699309cdb6efac8-profile_image-300x300.png
-// @version  2.0
+// @version  2.1
 // @include  https://mugen.spriteclub.tv/
 // @grant    GM.getResourceUrl
 // @resource modalInject https://gist.githubusercontent.com/siku2/74ae4829a0d426c7c429fd6539c78858/raw/f8424134c07cef711726cee152bbbab9a5cd9d8e/spriteclub_modal.html

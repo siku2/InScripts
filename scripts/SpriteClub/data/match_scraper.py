@@ -71,7 +71,7 @@ def extract_matches_from_page(index: int):
     return page
 
 
-def pages(pool_size=1):
+def pages(pool_size=10):
     pool = multiprocessing.Pool(pool_size)
     print(f"Getting first page", flush=True)
     bs = get_page_bs(1)
@@ -102,10 +102,10 @@ def scrape(*, max_matches: int = None):
     valid_matches = []
     print("getting matches!")
     try:
-        for ind, match in enumerate(filtered_matches()):
+        for ind, match in enumerate(matches()):
             if max_matches and ind >= max_matches:
                 break
-            valid_matches.append(match.to_dict())
+            valid_matches.append(match._asdict())
     except KeyboardInterrupt:
         print("got'cha!")
     except Exception:

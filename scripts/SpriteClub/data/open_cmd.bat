@@ -1,0 +1,1 @@
+cmd /k "call ..\venv\Scripts\Activate"
