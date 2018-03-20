@@ -1,40 +1,68 @@
 // ==UserScript==
 // @name     MAL+
 // @icon     https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
-// @include  https://myanimelist.net/anime/*
-// @version  1.0
+// @include  /^http(?:s)?\:\/\/myanimelist\.net.*$/
+// @version  1.2
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
 // ==/UserScript==
 
+let animeSearchName = "9Anime";
+let animeSearchURL = "https://9anime.to/search?keyword=";
+
 
 function adRemove() {
-  console.log("removing ads");
-  $("div._unit").has(".fs12").remove();
+  console.log("triggered ad removal");
+  Array.from(document.getElementsByTagName("*"))
+    .filter(el => {
+      if (!el.firstChild) {
+        return false
+      }
+      let nodeVal = el.firstChild.nodeValue;
+      if (!nodeVal) {
+        return false;
+      }
+      return nodeVal.includes("Notice us");
+    }).forEach(el => {
+      for (let i = 0; i < 5; i++) {
+        el = el.parentElement;
+      }
+      console.log("removed ad", el);
+      el.remove();
+    });
+}
+
+function observe() {
+  let observer = new MutationObserver(adRemove);
+  observer.observe(document.body, {
+    childList: true
+  });
+  console.log("observing body!");
+}
+
+
+function injectCSS() {}
+
+function addAnimeSearch() {
+  let bar = document.querySelector("div.user-status-block");
+  if (bar) {
+    console.log("Found target bar");
+    let animeName = document.querySelector("span[itemprop=name]").innerHTML;
+
+    $("<a></a>")
+      .text("Find on " + animeSearchName)
+      .addClass("inputButton btn-middle")
+      .css("padding", "4px 12px")
+      .css("margin-left", "8px")
+      .click(() => window.open(animeSearchURL + encodeURIComponent(animeName)))
+      .appendTo(bar);
+  }
 }
 
 function init() {
-  setTimeout(adRemove, 5000);
+  observe();
+  adRemove();
 
-  let bar = document.getElementsByClassName("user-status-block js-user-status-block fn-grey6 clearfix al mt8 pl12 po-r")[0];
-
-  var customStyle = document.createElement("style");
-  customStyle.innerHTML = ".no-after:after{display:none!important;}";
-  document.head.appendChild(customStyle);
-
-  if (bar) {
-    console.log("Found target bar");
-    el = document.createElement("a");
-    el.innerHTML = "Find on 9ANIME";
-    el.classList.add("btn-user-status-add-list");
-    el.classList.add("ml8");
-    el.classList.add("no-after");
-    el.style.padding = "6px 12px 6px 12px";
-    el.addEventListener("click", function() {
-      var animeName = encodeURIComponent(document.getElementById("contentWrapper").firstChild.lastChild.firstChild.innerHTML);
-      window.open("https://9anime.to/search?language=dubbed&keyword=" + animeName);
-    });
-    bar.appendChild(el);
-  }
+  addAnimeSearch();
 }
 
 $(document).ready(init);
