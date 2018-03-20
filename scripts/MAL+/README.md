@@ -9,4 +9,4 @@ Latest: [Version 1.2](https://cdn.rawgit.com/siku2/InScripts/1a339cfb/scripts/MA
 ### Styles
 
 In the future I might try to pump up MAL's CSS a little bit. Right now you can already use the `Arrow` theme for your anime list. Which looks something like this:
-![Arrow Theme](https://github.com/siku2/InScripts/scripts/MAL+/.gihub/arrow.png "Arrow")
+![Arrow Theme](https://raw.githubusercontent.com/siku2/InScripts/master/scripts/MAL%2B/.github/arrow.png "Arrow")
