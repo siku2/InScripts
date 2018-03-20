@@ -4,7 +4,7 @@ Removes ads from MyAnimeList and provides a nice little "Find on 9Anime" button 
 
 ## Install
 
-Latest: [Version 1.2](https://cdn.rawgit.com/siku2/InScripts/scripts/MAL+/MALplus.user.js)
+Latest: [Version 1.2](https://cdn.rawgit.com/siku2/InScripts/1a339cfb/scripts/MAL%2B/MALplus.user.js)
 
 ### Styles
 

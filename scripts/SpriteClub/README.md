@@ -4,7 +4,7 @@ This one is rather weird as you may be able to tell from the sheer size from it.
 
 ### Install
 
-Latest: [Version 2.1](https://cdn.rawgit.com/siku2/InScripts/scripts/SpriteClub/spriteclub.user.js)
+Latest: [Version 2.1](https://cdn.rawgit.com/siku2/InScripts/1a339cfb/scripts/SpriteClub/spriteclub.user.js)
 
 ### Les Parts
 
