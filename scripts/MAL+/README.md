@@ -10,4 +10,3 @@ Removes ads from MyAnimeList and provides a nice little "Find on 9Anime" button 
 ### Styles
 
 In the future I might try to pump up MAL's CSS a little bit. Right now you can already use the `Arrow` theme for your anime list. Which looks something like this:
-![Arrow Theme](https://raw.githubusercontent.com/siku2/InScripts/master/scripts/MAL%2B/.github/arrow.png "Arrow")
