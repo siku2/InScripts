@@ -1,4 +1,4 @@
-@import url(https://cdn.rawgit.com/siku2/InScripts/1b6016ce/scripts/MAL%2B/styles/arrow.css);
+@import url(https://cdn.rawgit.com/siku2/InScripts/84a67957/scripts/MAL%2B/styles/arrow.css);
 /*Change your backgrounds here*/
 
 /*CURRENTLY WATCHING*/
@@ -37,17 +37,6 @@ body[data-query*='"status":7'] {
   background-image: url("https://i.imgur.com/l7WvIBc.jpg");
 }
 
-/* picture at the bottom of your list
-** please note that default is a seiren picture even if you delete the image url below(it's just a sample image which you need to replace).
-** if you don't want this section, just delete the image url
-*/
-
-.list-unit .loading-space {
-  height: 250px;
-  width: 1000px;
-  background-image: url("https://i.imgur.com/fJJU72v.png?latest");
-}
-
 /*
 **Your desired avatar
 **Note that the best resolution is 120px * 120px
@@ -63,8 +52,4 @@ body[data-query*='"status":7'] {
 
 .cover-block::before {
   content: "Simon's Anime List";
-}
-
-.list-table-data .title a.link.sort {
-  color: #c8c1cf !important;
 }

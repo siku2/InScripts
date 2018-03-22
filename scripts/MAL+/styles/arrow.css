@@ -1325,14 +1325,14 @@ a:hover {
 .list-table .list-table-data .data.score {
   width: 21px !important;
   height: 21px !important;
-  background-image: url(http://i.imgur.com/udzEw6G.png);
+  background-image: url();
   background-repeat: no-repeat;
   background-size: contain;
   background-position: 50% 50%;
 }
 
 .list-table .list-table-data:hover .data.score {
-  background-image: url(http://i.imgur.com/EQcGOeO.png);
+  background-image: url();
   text-shadow: 0 0 2px #000, 0 0 1px #000, 1px 1px 4px #000, 0 0 0 #000;
 }
 
@@ -1364,7 +1364,7 @@ td.td1.borderRBL {
 }
 
 .list-table .list-table-data .data.title .edit a {
-  background-image: url(http://i.imgur.com/OT1yCLP.png);
+  background-image: url();
   display: inline-block;
   width: 15px;
   height: 15px;
@@ -1374,7 +1374,7 @@ td.td1.borderRBL {
 }
 
 .list-table .list-table-data .data.title .more a {
-  background-image: url(http://i.imgur.com/cUAaila.png);
+  background-image: url();
   display: inline-block;
   width: 15px;
   height: 15px;
@@ -1383,7 +1383,7 @@ td.td1.borderRBL {
 }
 
 .list-table .list-table-data .data.title .add a {
-  background-image: url(http://i.imgur.com/AoTgUAL.png);
+  background-image: url();
   display: inline-block;
   width: 15px;
   height: 15px;
@@ -1642,7 +1642,7 @@ td.td1.borderRBL {
 
 /* */
 
-.list-unit .loading-space {
+/* .list-unit .loading-space {
   background-color: rgba(0, 0, 0, .3);
   color: #fff !important;
   display: inline-block;
@@ -1659,6 +1659,8 @@ td.td1.borderRBL {
   background-repeat: no-repeat no-repeat;
   background-position: 0% 100%;
 }
+
+*/
 
 /*override codes*/
 
@@ -1735,7 +1737,7 @@ td.td1.borderRBL {
   position: absolute;
   top: 0px;
   left: 40px;
-  background-image: url("http://i.imgur.com/39cRtfK.png");
+  background-image: url();
   background-position: left top;
   background-repeat: no-repeat;
   background-size: auto 50px;
