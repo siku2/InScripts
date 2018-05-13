@@ -5,11 +5,7 @@ A powerful extension for MyAnimeList which turns the site into a streaming site!
 > This script also contains the functionality of **MAL+**
 
 ## Install
-##### Latest Stable: [Version 0.8.2]()
-##### Development: [Version 0.8.2]()
-
-###### **Older versions:**
-> Please keep in mind that the older versions might not work because of changes related to the server.
+##### [Version 0.8.2](https://github.com/siku2/InScripts/raw/master/scripts/MAL%2B/MyAnimeStream/Deities/myanimestream.user.js)
 
 
 # MAL+
