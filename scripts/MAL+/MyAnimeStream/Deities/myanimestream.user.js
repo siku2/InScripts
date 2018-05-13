@@ -6,7 +6,7 @@
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
 // ==/UserScript==
 
-const grobberUrl = "http://localhost:5000";
+const grobberUrl = "http://139.59.139.7";
 
 const adSearch = [
   "Notice us",
