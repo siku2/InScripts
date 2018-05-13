@@ -1,3 +1,17 @@
+### Note: This folder contains two separate userscripts.
+
+# MyAnimeStream
+A powerful extension for MyAnimeList which turns the site into a streaming site! Using various (more or less legal) methods this script fetches and embeds a stream for your favourite shows. Why am I even writing this... No one should actually use this, I don't want any legal trouble... I just want the nice "install" button so I don't have to install it manually...
+> This script also contains the functionality of **MAL+**
+
+## Install
+##### Latest Stable: [Version 0.8.2]()
+##### Development: [Version 0.8.2]()
+
+###### **Older versions:**
+> Please keep in mind that the older versions might not work because of changes related to the server.
+
+
 # MAL+
 
 Removes ads from MyAnimeList and provides a nice little "Find on 9Anime" button which searches for the anime so you can watch it even faster.
