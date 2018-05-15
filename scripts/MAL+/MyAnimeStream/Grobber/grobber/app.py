@@ -3,6 +3,7 @@ from operator import attrgetter, itemgetter, methodcaller
 from typing import Any, Callable, TypeVar
 
 from flask import Flask, Response, jsonify, redirect, request
+from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
 from . import proxy, sources
@@ -14,6 +15,7 @@ T2 = TypeVar("T2")
 _DEFAULT = object()
 
 app = Flask(__name__)
+sentry = Sentry(app)
 
 
 class UIDConverter(BaseConverter):

@@ -1,5 +1,6 @@
 beautifulsoup4
 flask
 pymongo
+raven[flask]
 requests
 werkzeug
