@@ -1,12 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from operator import attrgetter, methodcaller
+from operator import attrgetter, itemgetter, methodcaller
 from typing import Any, Callable, TypeVar
 
 from flask import Flask, Response, jsonify, redirect, request
 from werkzeug.routing import BaseConverter
 
 from . import proxy, sources
-from .exceptions import GrobberException, UIDUnknown, InvalidRequest
+from .exceptions import GrobberException, InvalidRequest, UIDUnknown
 from .source import UID
 
 T = TypeVar("T")
@@ -73,8 +73,8 @@ def search(query: str) -> Response:
         if len(results) >= num_results:
             break
         results.append(result)
-    ser_results = thread_pool.map(methodcaller("to_dict"), results)
-    return create_response(anime=list(ser_results))
+    ser_results = sorted(thread_pool.map(methodcaller("to_dict"), results), key=itemgetter("certainty"), reverse=True)
+    return create_response(anime=ser_results)
 
 
 @app.route("/anime/<UID:uid>")

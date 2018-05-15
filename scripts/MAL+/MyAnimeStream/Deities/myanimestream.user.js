@@ -2,11 +2,11 @@
 // @name     MyAnimeStream
 // @icon     https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
 // @include  /^http(?:s)?\:\/\/myanimelist\.net.*$/
-// @version  0.8.2
+// @version  0.8.3
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
 // ==/UserScript==
 
-const grobberUrl = "http://139.59.139.7";
+const grobberUrl = "https://mas.dokkeral.com";
 
 const adSearch = [
   "Notice us",
@@ -82,7 +82,7 @@ async function showEpisodePage() {
   let episodeSlide = document.querySelector("#vue-video-slide");
 
   if (embedContainer.length > 0) {
-    embedContainer.html($("<iframe></iframe>")
+    embedContainer.html($("<iframe allowfullscreen></iframe>")
       .attr("src", episodeStream)
       .width(800)
       .height(535));
