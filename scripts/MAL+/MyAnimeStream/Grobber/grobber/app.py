@@ -29,6 +29,12 @@ app.url_map.converters["UID"] = UIDConverter
 thread_pool = ThreadPoolExecutor(max_workers=5)
 
 
+@app.teardown_appcontext
+def teardown_appcontext(error):
+    proxy.teardown()
+    sources.save_dirty()
+
+
 def create_response(data: dict = None, success: bool = True, **kwargs) -> Response:
     data = data or {}
     data.update(kwargs)
@@ -55,11 +61,6 @@ def cast_argument(val: T, cls: Callable[[T], T2], default: Any = _DEFAULT) -> T2
             return default
     else:
         return new_val
-
-
-@app.teardown_appcontext
-def teardown(ctx):
-    sources.save_cache()
 
 
 @app.route("/search/<query>")

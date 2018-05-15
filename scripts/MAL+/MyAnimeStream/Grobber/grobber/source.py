@@ -1,6 +1,5 @@
 import abc
 import re
-import time
 from collections import namedtuple
 from contextlib import suppress
 from datetime import datetime
@@ -73,12 +72,12 @@ class Anime(abc.ABC):
 
     _req: Request
     _dirty: bool
-    _last_update: int
+    _last_update: datetime
 
     def __init__(self, req: Request):
         self._req = req
         self._dirty = False
-        self._last_update = 0
+        self._last_update = datetime.now()
 
     def __getattribute__(self, name: str) -> Any:
         if name in type(self).CHANGING_ATTRS:
@@ -97,10 +96,16 @@ class Anime(abc.ABC):
     def __str__(self) -> str:
         return self.title
 
+    def __eq__(self, other: "Anime") -> bool:
+        return self.uid == other.uid
+
+    def __hash__(self) -> int:
+        return hash(self.uid)
+
     @property
     def _update(self) -> bool:
-        current_time = int(time.time())
-        if current_time > (self._last_update + self.UPDATE_INTERVAL):
+        current_time = datetime.now()
+        if (current_time - self._last_update).total_seconds() > self.UPDATE_INTERVAL:
             self._last_update = current_time
             return True
         return False
@@ -149,12 +154,14 @@ class Anime(abc.ABC):
 
     @property
     def state(self) -> dict:
-        data = {"req": self._req.state}
+        data = {"cls": type(self).__name__, "req": self._req.state}
         for attr in self.ATTRS:
             val = getattr(self, "_" + attr, None)
             if val is not None:
                 if attr == "episodes":
                     val = [ep.state for ep in val]
+                elif attr == "uid":
+                    attr = "_id"
                 data[attr] = val
         return data
 
@@ -170,10 +177,13 @@ class Anime(abc.ABC):
 
     @classmethod
     def from_state(cls, state: dict) -> "Anime":
+        state.pop("cls")
         inst = cls(Request.from_state(state.pop("req")))
         for key, value in state.items():
             if key == "episodes":
                 value = [cls.EPISODE_CLS.from_state(ep) for ep in value]
+            elif key == "_id":
+                key = "uid"
             setattr(inst, "_" + key, value)
         return inst
 
@@ -185,4 +195,4 @@ class Anime(abc.ABC):
                 "title": self.title,
                 "episodes": self.episode_count,
                 "dub": self.is_dub,
-                "updated": datetime.fromtimestamp(self._last_update).isoformat()}
+                "updated": self._last_update.isoformat()}

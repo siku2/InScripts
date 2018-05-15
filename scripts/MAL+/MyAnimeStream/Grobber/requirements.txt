@@ -1,5 +1,5 @@
 beautifulsoup4
 flask
+pymongo
 requests
-tinydb
 werkzeug
