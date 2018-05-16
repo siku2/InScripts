@@ -2,11 +2,13 @@
 // @name     MyAnimeStream
 // @icon     https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
 // @include  /^http(?:s)?\:\/\/myanimelist\.net.*$/
-// @version  0.8.4
+// @version  0.8.6
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
+// @require  https://cdn.ravenjs.com/3.25.1/raven.min.js
 // ==/UserScript==
 
 const grobberUrl = "https://mas.dokkeral.com";
+const ravenDSN = null;
 
 const adSearch = [
   "Notice us",
@@ -242,5 +244,16 @@ function init() {
   main();
 }
 
-$(document)
-  .ready(init);
+function _init() {
+  $(document)
+    .ready(init);
+}
+
+if (ravenDSN) {
+  Raven.config(ravenDSN)
+    .install();
+
+  Raven.context(_init);
+  else {
+    _init();
+  }
