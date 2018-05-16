@@ -1,4 +1,3 @@
-*
-!grobber/
-!.docker/
-!requirements.txt
+venv
+.gitignore
+docker-compose.yml

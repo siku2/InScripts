@@ -9,8 +9,9 @@ services:
     ports:
       - 80:80
     networks:
-      - frontend
       - backend
+    environment:
+      - "MONGO_URI=mongodb://database:27017"
     depends_on:
       - database
   database:
@@ -23,8 +24,4 @@ services:
       - backend
 
 networks:
-  frontend:
-    external: true
-
-  backend:
-    external: false
+  backend: {}

@@ -2,7 +2,7 @@
 // @name     MyAnimeStream
 // @icon     https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
 // @include  /^http(?:s)?\:\/\/myanimelist\.net.*$/
-// @version  0.8.3
+// @version  0.8.4
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
 // ==/UserScript==
 
@@ -209,14 +209,16 @@ async function getAnimeInfo() {
 
   if (animeUID) {
     const data = await $.getJSON(grobberUrl + "/anime/" + animeUID);
-    animeEpisodes = data.episodes;
-  } else {
-    const result = await $.getJSON(grobberUrl + "/search/" + animeName);
-    const data = result.anime[0].anime;
-    animeUID = data.uid;
-    animeEpisodes = data.episodes;
-    localStorage.setItem(animeName, animeUID);
+    if (data.success) {
+      animeEpisodes = data.episodes;
+      return;
+    }
   }
+  const result = await $.getJSON(grobberUrl + "/search/" + animeName);
+  const data = result.anime[0].anime;
+  animeUID = data.uid;
+  animeEpisodes = data.episodes;
+  localStorage.setItem(animeName, animeUID);
 }
 
 async function main() {
