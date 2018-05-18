@@ -2,13 +2,14 @@
 // @name     MyAnimeStream
 // @icon     https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
 // @include  /^http(?:s)?\:\/\/myanimelist\.net.*$/
-// @version  0.8.6
+// @version  0.8.7
 // @require  https://code.jquery.com/jquery-3.2.1.min.js
 // @require  https://cdn.ravenjs.com/3.25.1/raven.min.js
+// @require  https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js
 // ==/UserScript==
 
 const grobberUrl = "https://mas.dokkeral.com";
-const ravenDSN = null;
+const ravenDSN = "https://1d91640d1e45402c9a8f80e74c24658b@sentry.io/1207280";
 
 const adSearch = [
   "Notice us",
@@ -84,6 +85,7 @@ async function showEpisodePage() {
   let episodeSlide = document.querySelector("#vue-video-slide");
 
   if (embedContainer.length > 0) {
+    console.log("Manipulating existing video embed");
     embedContainer.html($("<iframe allowfullscreen></iframe>")
       .attr("src", episodeStream)
       .width(800)
@@ -98,6 +100,7 @@ async function showEpisodePage() {
       fillSlide(episodeSlideCount);
     }
   } else {
+    console.log("Creating new video embed and page content");
     const episodeHTML = $(await $.get(grobberUrl + "/static/prefabs/mal_episode.html"));
     episodeHTML.find("span.episode_number")
       .text(episodeIndex);
@@ -154,7 +157,7 @@ async function showEpsiodeOverview() {
         .attr("href", "episode/" + epIdx);
 
       episodeObject.find("td.episode-video>a")
-        .attr("href", epIdx)
+        .attr("href", "episode/" + epIdx)
         .find("img")
         .attr("alt", "Watch Episode #" + epIdx)
 
@@ -167,12 +170,14 @@ async function showEpsiodeOverview() {
   let episodeTable = document.querySelector("table.episode_list");
 
   if (episodeTable) {
+    console.log("Manipulating existing episode table...");
     const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data")
       .length;
     if (episodeCount < animeEpisodes) {
       fillList(episodeCount);
     }
   } else {
+    console.log("Recreating episode table...");
     const episodeListHTML = $(await $.get(grobberUrl + "/static/prefabs/mal_episode_list.html"));
     const epPrefab = episodeListHTML.find("tr.episode-list-data")
       .detach()
@@ -213,20 +218,56 @@ async function getAnimeInfo() {
     const data = await $.getJSON(grobberUrl + "/anime/" + animeUID);
     if (data.success) {
       animeEpisodes = data.episodes;
-      return;
+      return true;
+    } else {
+      console.warn("Unsuccessful request for uid \"" + animeUID + "\":", data);
     }
   }
+  console.log("Searching for anime", animeName);
   const result = await $.getJSON(grobberUrl + "/search/" + animeName);
+  if (!result.success || result.anime.length === 0) {
+    console.error("Couldn't find anime \"" + animeName + "\"");
+    return false;
+  }
+
+  console.log("got answer", result);
   const data = result.anime[0].anime;
   animeUID = data.uid;
   animeEpisodes = data.episodes;
   localStorage.setItem(animeName, animeUID);
+  return true;
+}
+
+function _animeNotFoundMsg() {
+  const animeProvId = animeName.replace(/\W+/g, "")
+    .toLowerCase();
+  console.log(animeProvId);
+  const cookieName = "already-warned-" + animeProvId;
+  if (!Cookies.get(cookieName)) {
+    alertMsg = "Couldn't find \"" + animeName + "\"!";
+    if (Raven.isSetup()) {
+      alertMsg += " A report has been created for you and you can expect for this anime to be available soon";
+      Raven.captureMessage("Anime \"" + animeName + "\" not found.", {
+        level: "info"
+      });
+    }
+    Cookies.set(cookieName, "true", {
+      expires: 1
+    });
+    alert(alertMsg);
+  } else {
+    console.log("Already warned about missing anime");
+  }
 }
 
 async function main() {
   const path = window.location.pathname;
   if (path.match(/^\/anime\/\d+\/[\w-]+\/?/)) {
-    await getAnimeInfo();
+    const foundAnimeInfo = await getAnimeInfo();
+    if (!foundAnimeInfo) {
+      _animeNotFoundMsg();
+      return;
+    }
   }
 
   if (path.match(/^\/anime\/\d+\/[\w-]+\/?$/)) {
@@ -245,15 +286,16 @@ function init() {
 }
 
 function _init() {
-  $(document)
-    .ready(init);
+  $(init);
 }
 
 if (ravenDSN) {
   Raven.config(ravenDSN)
     .install();
 
+  console.info("Using Raven DSN!");
   Raven.context(_init);
-  else {
-    _init();
-  }
+} else {
+  console.warn("No Raven DSN provided, not installing!");
+  _init();
+}
