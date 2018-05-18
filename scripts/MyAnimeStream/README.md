@@ -3,4 +3,4 @@ A powerful extension for MyAnimeList which turns the site into a streaming site!
 
 
 ## Install
-##### [Version 0.8.7](https://github.com/siku2/InScripts/raw/master/scripts/MAL%2B/MyAnimeStream/Deities/myanimestream.user.js)
+##### [Version 0.8.7](https://github.com/siku2/InScripts/raw/master/scripts/MyAnimeStream/Deities/myanimestream.user.js)
