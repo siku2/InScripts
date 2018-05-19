@@ -1,5 +1,4 @@
 import re
-from operator import itemgetter
 from typing import Iterator, List, Tuple
 
 from . import register_source
@@ -8,7 +7,7 @@ from ..exceptions import EpisodeNotFound
 from ..request import Request
 from ..source import Anime, Episode, SearchResult, get_certainty
 
-BASE_URL = "https://www2.gogoanime.se"
+BASE_URL = "https://gogoanime.io"
 SEARCH_URL = BASE_URL + "//search.html"
 EPISODE_LIST_URL = BASE_URL + "//load-list-episode"
 ANIME_URL = BASE_URL + "/category/{name}"
@@ -43,35 +42,6 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
         yield Request(link), similarity
 
 
-def find_anime_page(name: str, dub: bool = False) -> Request:
-    # First just check if we can find the correct page by "guessing" its url
-    potential_page_name = get_potential_page_name(name)
-    if dub:
-        potential_page_name += "-dub"
-    req = Request(ANIME_URL.format(name=potential_page_name))
-    if req.success:
-        return req
-
-    # If that doesn't work just do a basic search
-    req = Request(SEARCH_URL, {"keyword": name})
-    bs = req.bs
-    container = bs.select_one("ul.items")
-    search_results = container.find_all("li")
-    animes = []
-    for result in search_results:
-        image_link = result.find("a")
-        title = image_link["title"]
-        if dub != title.endswith("(Dub)"):
-            continue
-        link = BASE_URL + image_link["href"]
-        similarity = get_certainty(name, title)
-        animes.append((title, link, similarity))
-    if not animes:
-        raise KeyError(f"No anime with name \"{name}\" found")
-    anime = max(animes, key=itemgetter(2))
-    return Request(anime[1])
-
-
 class GogoEpisode(Episode):
 
     @cached_property
@@ -80,6 +50,7 @@ class GogoEpisode(Episode):
 
 
 class GogoAnime(Anime):
+    ATTRS = ("anime_id", "raw_title")
     EPISODE_CLS = GogoEpisode
 
     @cached_property
@@ -121,7 +92,11 @@ class GogoAnime(Anime):
 
     @classmethod
     def get(cls, name: str, dub: bool = False) -> "GogoAnime":
-        return cls(find_anime_page(name, dub))
+        potential_page_name = get_potential_page_name(name)
+        if dub:
+            potential_page_name += "-dub"
+        req = Request(ANIME_URL.format(name=potential_page_name))
+        return cls(req)
 
     def get_episode(self, index: int) -> GogoEpisode:
         if not (0 <= index < self.episode_count):
@@ -129,7 +104,7 @@ class GogoAnime(Anime):
         if hasattr(self, "_episodes"):
             return self.episodes[index]
         page_name = get_potential_page_name(self.title)
-        return GogoEpisode(Request(f"{BASE_URL}/{page_name}-episode-{index + 1}"))
+        return self.EPISODE_CLS(Request(f"{BASE_URL}/{page_name}-episode-{index + 1}"))
 
 
 register_source(GogoAnime)

@@ -5,7 +5,7 @@ from typing import Dict, Iterator, Optional, Set, Type
 from ..proxy import anime_collection
 from ..source import Anime, SearchResult, UID
 
-_SOURCES = ["gogoanime"]
+_SOURCES = ["gogoanime", "nineanime"]
 SOURCES: Dict[str, Type[Anime]] = {}
 
 
@@ -41,7 +41,8 @@ def get_anime(uid: UID) -> Optional[Anime]:
 
 def search_anime(query: str, dub=False) -> Iterator[SearchResult]:
     sources = [source.search(query, dub=dub) for source in SOURCES.values()]
-    result_iter = chain(*zip_longest(*sources))
+    result_zip = zip_longest(*sources)
+    result_iter = chain(*result_zip)
     for result in result_iter:
         anime = result.anime
         CACHE.add(anime)

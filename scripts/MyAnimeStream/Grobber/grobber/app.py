@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from operator import attrgetter, itemgetter, methodcaller
+from operator import attrgetter, methodcaller
 from typing import Any, Callable, TypeVar
 
 from flask import Flask, Response, jsonify, redirect, request
@@ -71,12 +71,14 @@ def search(query: str) -> Response:
     if not (0 < num_results <= 10):
         return error_response(InvalidRequest(f"Can only request up to 10 results (not {num_results})"))
     result_iter = sources.search_anime(query, dub=proxy.requests_dub)
-    results = []
+    num_consider_results = max(num_results, 10)
+    results_pool = []
     for result in result_iter:
-        if len(results) >= num_results:
+        if len(results_pool) >= num_consider_results:
             break
-        results.append(result)
-    ser_results = sorted(thread_pool.map(methodcaller("to_dict"), results), key=itemgetter("certainty"), reverse=True)
+        results_pool.append(result)
+    results = sorted(results_pool, key=attrgetter("certainty"), reverse=True)[:num_results]
+    ser_results = list(thread_pool.map(methodcaller("to_dict"), results))
     return create_response(anime=ser_results)
 
 

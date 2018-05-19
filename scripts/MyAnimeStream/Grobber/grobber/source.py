@@ -33,7 +33,7 @@ class Episode(abc.ABC):
         self._dirty = False
 
     def __repr__(self) -> str:
-        return f"Ep. {self._req:!r}"
+        return f"Ep. {repr(self._req)}"
 
     @property
     def dirty(self) -> bool:
@@ -66,7 +66,8 @@ class Episode(abc.ABC):
 class Anime(abc.ABC):
     EPISODE_CLS = Episode
 
-    ATTRS = ("uid", "is_dub", "title", "episode_count", "episodes", "last_update")
+    _ATTRS = ("uid", "is_dub", "title", "episode_count", "episodes", "last_update")
+    ATTRS = ()
     CHANGING_ATTRS = ("episode_count", "episodes")
     UPDATE_INTERVAL = 60 * 30  # 30 mins should be fine, right?
 
@@ -78,6 +79,8 @@ class Anime(abc.ABC):
         self._req = req
         self._dirty = False
         self._last_update = datetime.now()
+
+        self.ATTRS = (*self.ATTRS, *self._ATTRS)
 
     def __getattribute__(self, name: str) -> Any:
         if name in type(self).CHANGING_ATTRS:
