@@ -44,6 +44,8 @@ def search_anime(query: str, dub=False) -> Iterator[SearchResult]:
     result_zip = zip_longest(*sources)
     result_iter = chain(*result_zip)
     for result in result_iter:
+        if result is None:
+            continue
         anime = result.anime
         CACHE.add(anime)
         yield result
