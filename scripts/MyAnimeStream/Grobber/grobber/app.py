@@ -6,7 +6,7 @@ from flask import Flask, Response, jsonify, redirect, request
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
-from . import proxy, sources
+from . import __info__, proxy, sources
 from .exceptions import GrobberException, InvalidRequest, UIDUnknown
 from .source import UID
 
@@ -15,7 +15,11 @@ T2 = TypeVar("T2")
 _DEFAULT = object()
 
 app = Flask(__name__)
+import os;
+
+print(os.environ)
 sentry = Sentry(app)
+sentry.client.release = __info__.__version__
 
 
 class UIDConverter(BaseConverter):

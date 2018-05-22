@@ -1,6 +1,6 @@
 userscript:
   name:       MyAnimeStream
-  version:    0.8.7
+  version:    0.9.0
   icon:       https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
   include:    /^http(?:s)?\:\/\/myanimelist\.net.*$/
   require:

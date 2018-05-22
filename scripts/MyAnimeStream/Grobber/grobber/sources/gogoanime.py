@@ -1,3 +1,4 @@
+import math
 import re
 from typing import Iterator, List, Tuple
 
@@ -17,6 +18,12 @@ RE_SPECIAL = re.compile(r"[^\w\-]+")
 RE_CLEAN = re.compile(r"-+")
 
 RE_DUB_STRIPPER = re.compile(r"\s\(Dub\)$")
+
+RE_NOT_FOUND = re.compile(r"<h1 class=\"entry-title\">Page not found<\/h1>")
+
+
+def is_not_found_page(req: Request):
+    return bool(RE_NOT_FOUND.search(req.text))
 
 
 def get_potential_page_name(name: str) -> str:
@@ -74,7 +81,14 @@ class GogoAnime(Anime):
         holder = self._req.bs.select_one("#episode_page a.active")
         if not holder:
             return 0
-        return int(holder["ep_end"])
+        last_ep_text = holder["ep_end"]
+        if last_ep_text.isnumeric():
+            return int(last_ep_text)
+        try:
+            # I'm totally assuming that decimal values are always .5... Try to stop me
+            return int(math.ceil(float(last_ep_text)))
+        except ValueError:
+            raise ValueError(f"Couldn't understand last episode label for {self}: \"{last_ep_text}\"")
 
     @cached_property
     def episodes(self) -> List[GogoEpisode]:
@@ -103,8 +117,13 @@ class GogoAnime(Anime):
             raise EpisodeNotFound(index, self.episode_count)
         if hasattr(self, "_episodes"):
             return self.episodes[index]
+
         page_name = get_potential_page_name(self.title)
-        return self.EPISODE_CLS(Request(f"{BASE_URL}/{page_name}-episode-{index + 1}"))
+        ep_req = Request(f"{BASE_URL}/{page_name}-episode-{index + 1}")
+        if not is_not_found_page(ep_req):
+            return self.EPISODE_CLS(ep_req)
+        else:
+            return self.episodes[index]
 
 
 register_source(GogoAnime)

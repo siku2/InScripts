@@ -12,6 +12,7 @@ services:
       - backend
     environment:
       - "MONGO_URI=mongodb://database:27017"
+      - SENTRY_DSN
     depends_on:
       - database
   database:
