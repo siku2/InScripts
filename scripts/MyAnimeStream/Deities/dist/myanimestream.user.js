@@ -1,6 +1,12 @@
 // ==UserScript==
 // @name MyAnimeStream
-// @version 0.9.0
+// @author siku2
+// @version 0.9.1
+// @description Get the most out of MyAnimeList by turning the page into a streaming site.
+// @homepage https://siku2.github.io/
+// @supportURL https://siku2.github.io/
+// @updateURL https://github.com/siku2/InScripts/raw/master/scripts/MyAnimeStream/Deities/dist/myanimestream.user.js
+// @downloadURL https://github.com/siku2/InScripts/raw/master/scripts/MyAnimeStream/Deities/dist/myanimestream.user.js
 // @icon https://myanimelist.cdn-dena.com/img/sp/icon/apple-touch-icon-256.png
 // @include /^http(?:s)?\:\/\/myanimelist\.net.*$/
 // @require https://code.jquery.com/jquery-3.2.1.min.js
