@@ -42,7 +42,8 @@ async function showAnimeEpisode() {
     }
   } else {
     console.log("Creating new video embed and page content");
-    const episodeHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID + "/" + episodeIndex - 1);
+    const episodeHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID + "/" + (episodeIndex - 1)
+      .toString());
     document.querySelector("td>div.js-scrollfix-bottom-rel>div>div>table>tbody")
       .innerHTML = episodeHTML;
   }

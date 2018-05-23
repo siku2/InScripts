@@ -1,5 +1,6 @@
 {% macro table(items, ascend=True, visible=True) %}
-    <table class="mt8 episode_list js-watch-episode-list {{ "ascend" if ascend }}" {{ "style=\"display:none;\"" if not visible }} width="100%"
+    <table class="mt8 episode_list js-watch-episode-list {{ "ascend" if ascend else "descend" }}" {{ "style=display:none;" if not visible }}
+           width="100%"
            cellspacing="0" cellpadding="0" border="0">
         <tbody>
         <tr class="episode-list-header">

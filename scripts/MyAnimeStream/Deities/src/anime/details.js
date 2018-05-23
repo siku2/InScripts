@@ -10,8 +10,6 @@ function patchNoEpisodeTab() {
 
 
 function showAnimeDetails() {
-  patchNoEpisodeTab();
-
   const atEpisodeContainer = document.getElementById("myinfo_watchedeps");
   const nextEpisode = (parseInt(atEpisodeContainer.getAttribute("value")) + 1) || 1;
 
