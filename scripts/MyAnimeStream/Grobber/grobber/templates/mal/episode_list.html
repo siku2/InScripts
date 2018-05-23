@@ -11,12 +11,12 @@
             <td class="episode-video"></td>
             <td class="episode-title">Episode Title</td>
         </tr>
-        {% for _ in range(episode_count) %}
+        {% for ind in (range(episode_count) if ascend else range(episode_count)|reverse) %}
             <tr class="episode-list-data">
-                <td class="episode-number nowrap">{{ loop.index }}</td>
+                <td class="episode-number nowrap">{{ ind + 1 }}</td>
                 <td class="episode-video nowrap">
-                    <a href="episode/{{ loop.index }}">
-                        <img src="https://myanimelist.cdn-dena.com/images/icon_watch_monitor.png" alt="Watch Episode #{{ loop.index }}" width="20"
+                    <a href="episode/{{ ind + 1 }}">
+                        <img src="https://myanimelist.cdn-dena.com/images/icon_watch_monitor.png" alt="Watch Episode #{{ ind + 1 }}" width="20"
                              height="19">
                     </a>
                 </td>

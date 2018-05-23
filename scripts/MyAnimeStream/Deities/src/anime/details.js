@@ -3,8 +3,13 @@ function patchNoEpisodeTab() {
   if (!episodeTab) {
     console.log("No Episodes tab found, building my own");
     const preEpisodeTab = document.querySelector("div#horiznav_nav li:nth-child(2)");
-    $("<li><a href=" + window.location.pathname + "/episode/1" + ">Watch</a></li>")
-      .insertAfter(preEpisodeTab);
+    const tab = $("<li><a href=" + window.location.pathname + "/episode/1" + ">Watch</a></li>");
+
+    if (!document.querySelector("a.horiznav_active")) {
+      tab.find("a").addClass("horiznav_active");
+    }
+
+    tab.insertAfter(preEpisodeTab);
   }
 }
 
