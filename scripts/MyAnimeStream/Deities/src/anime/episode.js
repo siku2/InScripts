@@ -48,6 +48,7 @@ async function showAnimeEpisode() {
       .innerHTML = episodeHTML;
   }
   document.querySelector("#vue-video-slide")
-    .style.left = (-currentEpisode.offsetLeft)
+    .style.left = (-document.querySelector("li.btn-anime.play")
+      .offsetLeft)
     .toString() + "px";
 }
