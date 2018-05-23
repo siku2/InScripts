@@ -3,6 +3,7 @@ from operator import attrgetter, methodcaller
 from typing import Any, Callable, TypeVar
 
 from flask import Flask, Response, jsonify, redirect, request
+from flask_cors import CORS
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
@@ -15,11 +16,9 @@ T2 = TypeVar("T2")
 _DEFAULT = object()
 
 app = Flask(__name__)
-import os;
-
-print(os.environ)
 sentry = Sentry(app)
 sentry.client.release = __info__.__version__
+CORS(app)
 
 
 class UIDConverter(BaseConverter):
