@@ -1,0 +1,34 @@
+{% macro table(items, ascend=True, visible=True) %}
+    <table class="mt8 episode_list js-watch-episode-list {{ "ascend" if ascend }}" {{ "style=\"display:none;\"" if not visible }} width="100%"
+           cellspacing="0" cellpadding="0" border="0">
+        <tbody>
+        <tr class="episode-list-header">
+            <td class="episode-number">
+                <div class="btn-sort-outer js-btn-sort"
+                     onclick="$('.js-watch-episode-list.ascend').toggle();$('.js-watch-episode-list.descend').toggle();"></div>
+            </td>
+            <td class="episode-video"></td>
+            <td class="episode-title">Episode Title</td>
+        </tr>
+        {% for _ in range(episode_count) %}
+            <tr class="episode-list-data">
+                <td class="episode-number nowrap">{{ loop.index }}</td>
+                <td class="episode-video nowrap">
+                    <a href="episode/{{ loop.index }}">
+                        <img src="https://myanimelist.cdn-dena.com/images/icon_watch_monitor.png" alt="Watch Episode #{{ loop.index }}" width="20"
+                             height="19">
+                    </a>
+                </td>
+                <td class="episode-title">
+                    <a href="episode/{{ loop.index }}" class="fl-l fw-b ">Episode {{ loop.index }}</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+<div class="container">
+    {{ table(episode_count) }}
+    {{ table(episode_count, False, False) }}
+</div>

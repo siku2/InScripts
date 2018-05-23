@@ -1,8 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from operator import attrgetter, methodcaller
-from typing import Any, Callable, TypeVar
 
-from flask import Flask, Response, jsonify, redirect, request
+from flask import Flask, Response, redirect, request
 from flask_cors import CORS
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
@@ -10,10 +9,8 @@ from werkzeug.routing import BaseConverter
 from . import __info__, proxy, sources
 from .exceptions import GrobberException, InvalidRequest, UIDUnknown
 from .source import UID
-
-T = TypeVar("T")
-T2 = TypeVar("T2")
-_DEFAULT = object()
+from .templates import templates
+from .utils import *
 
 app = Flask(__name__)
 sentry = Sentry(app)
@@ -32,40 +29,13 @@ class UIDConverter(BaseConverter):
 app.url_map.converters["UID"] = UIDConverter
 
 thread_pool = ThreadPoolExecutor(max_workers=5)
+app.register_blueprint(templates)
 
 
 @app.teardown_appcontext
 def teardown_appcontext(error):
     proxy.teardown()
     sources.save_dirty()
-
-
-def create_response(data: dict = None, success: bool = True, **kwargs) -> Response:
-    data = data or {}
-    data.update(kwargs)
-    data["success"] = success
-    return jsonify(data)
-
-
-def error_response(exception: GrobberException) -> Response:
-    data = {
-        "msg": exception.msg,
-        "code": exception.code,
-        "name": type(exception).__name__
-    }
-    return create_response(data, success=False)
-
-
-def cast_argument(val: T, cls: Callable[[T], T2], default: Any = _DEFAULT) -> T2:
-    try:
-        new_val = cls(val)
-    except Exception as e:
-        if default is _DEFAULT:
-            raise e
-        else:
-            return default
-    else:
-        return new_val
 
 
 @app.route("/search/<query>")

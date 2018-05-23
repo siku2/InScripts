@@ -1,10 +1,14 @@
 async function showAnimeEpsiodes() {
-  function fillList(startIndex, episodePrefab) {
-    episodeTable = document.querySelector("table.episode_list");
-    const episodeTableDescendHeader = document.querySelector("table.episode_list.descend tr.episode-list-header");
+  let episodeTable = document.querySelector("table.episode_list");
 
-    if (!episodePrefab) {
-      episodePrefab = document.querySelector("tr.episode-list-data")
+  if (episodeTable) {
+    console.log("Manipulating existing episode table...");
+    const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data")
+      .length;
+    if (episodeCount < animeEpisodes) {
+      const episodeTableDescendHeader = document.querySelector("table.episode_list.descend tr.episode-list-header");
+
+      const episodePrefab = document.querySelector("tr.episode-list-data")
         .cloneNode(true);
       episodePrefab.querySelector("td.episode-title")
         .querySelector("span.di-ib")
@@ -13,51 +17,34 @@ async function showAnimeEpsiodes() {
         .remove();
       episodePrefab.querySelector("td.episode-forum")
         .remove();
-    }
 
-    for (let i = startIndex; i < animeEpisodes; i++) {
-      let epIdx = (i + 1)
-        .toString();
-      let episodeObject = $(episodePrefab)
-        .clone();
-      episodeObject.find("td.episode-number")
-        .text(epIdx);
-      episodeObject.find("td.episode-title")
-        .find("a")
-        .text("Episode " + epIdx)
-        .attr("href", "episode/" + epIdx);
+      for (let i = startIndex; i < animeEpisodes; i++) {
+        let epIdx = (i + 1)
+          .toString();
+        let episodeObject = $(episodePrefab)
+          .clone();
+        episodeObject.find("td.episode-number")
+          .text(epIdx);
+        episodeObject.find("td.episode-title")
+          .find("a")
+          .text("Episode " + epIdx)
+          .attr("href", "episode/" + epIdx);
 
-      episodeObject.find("td.episode-video>a")
-        .attr("href", "episode/" + epIdx)
-        .find("img")
-        .attr("alt", "Watch Episode #" + epIdx)
+        episodeObject.find("td.episode-video>a")
+          .attr("href", "episode/" + epIdx)
+          .find("img")
+          .attr("alt", "Watch Episode #" + epIdx);
 
-      episodeObject.appendTo(episodeTable);
-      episodeObject.clone()
-        .insertAfter(episodeTableDescendHeader);
-    }
-  }
-
-  let episodeTable = document.querySelector("table.episode_list");
-
-  if (episodeTable) {
-    console.log("Manipulating existing episode table...");
-    const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data")
-      .length;
-    if (episodeCount < animeEpisodes) {
-      fillList(episodeCount);
+        episodeObject.appendTo(episodeTable);
+        episodeObject.clone()
+          .insertAfter(episodeTableDescendHeader);
+      }
     }
   } else {
     console.log("Recreating episode table...");
-    const episodeListHTML = $(await $.get(grobberUrl + "/static/prefabs/mal_episode_list.html"));
-    const epPrefab = episodeListHTML.find("tr.episode-list-data")
-      .detach()
-      .show();
-
+    const episodeListHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID);
     document.querySelector("div.mb4")
-      .outerHTML = episodeListHTML.html();
-
-    fillList(0, epPrefab);
+      .outerHTML = episodeListHTML;
   }
 
   const episodeCountDisplay = document.querySelector("h2>span.di-ib");
