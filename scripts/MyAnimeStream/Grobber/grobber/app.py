@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 from operator import attrgetter, methodcaller
 
 from flask import Flask, Response, redirect, request
-from flask_cors import CORS
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
@@ -15,7 +14,6 @@ from .utils import *
 app = Flask(__name__)
 sentry = Sentry(app)
 sentry.client.release = __info__.__version__
-CORS(app)
 
 
 class UIDConverter(BaseConverter):
