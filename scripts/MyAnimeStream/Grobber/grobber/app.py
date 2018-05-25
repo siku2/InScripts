@@ -9,6 +9,7 @@ from . import __info__, proxy, sources
 from .exceptions import GrobberException, InvalidRequest, UIDUnknown
 from .source import UID
 from .templates import templates
+from .users import users
 from .utils import *
 
 app = Flask(__name__)
@@ -28,6 +29,7 @@ app.url_map.converters["UID"] = UIDConverter
 
 thread_pool = ThreadPoolExecutor(max_workers=5)
 app.register_blueprint(templates)
+app.register_blueprint(users)
 
 
 @app.teardown_appcontext

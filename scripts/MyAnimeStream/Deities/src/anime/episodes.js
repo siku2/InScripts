@@ -18,7 +18,7 @@ async function showAnimeEpsiodes() {
       episodePrefab.querySelector("td.episode-forum")
         .remove();
 
-      for (let i = startIndex; i < animeEpisodes; i++) {
+      for (let i = episodeCount; i < animeEpisodes; i++) {
         let epIdx = (i + 1)
           .toString();
         let episodeObject = $(episodePrefab)

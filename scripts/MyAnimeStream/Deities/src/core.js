@@ -1,10 +1,13 @@
+let username;
+
 function addUserContext() {
   if (Raven.isSetup()) {
     const usernameContainer = document.querySelector("a.header-profile-link");
     if (usernameContainer) {
+      username = usernameContainer.text;
       console.log("Set user context.");
       Raven.setUserContext({
-        username: usernameContainer.text
+        username: username
       });
     } else {
       console.log("Not logged in");
@@ -13,14 +16,17 @@ function addUserContext() {
 }
 
 
-function init() {
-  addUserContext();
+async function init() {
   observe();
+
+  addUserContext();
+  await loadConfig();
+
   route();
 }
 
 function _init() {
-  $(init);
+  $(() => init());
 }
 
 if (ravenDSN) {

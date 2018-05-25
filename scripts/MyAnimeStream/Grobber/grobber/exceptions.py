@@ -8,6 +8,8 @@ class GrobberExceptionType(IntEnum):
     UIDUnknown = 101
     EPISODE_NOT_FOUND = 102
 
+    USER_NOT_FOUND = 201
+
 
 class GrobberException(Exception):
     msg: str
@@ -33,3 +35,8 @@ class EpisodeNotFound(GrobberException):
     def __init__(self, index: int, anime_length: int):
         super().__init__(f"No episode {index} found, only {anime_length} episodes! Did you forgot that the first episode is index 0?",
                          GrobberExceptionType.EPISODE_NOT_FOUND)
+
+
+class UserNotFound(GrobberException):
+    def __init__(self, username: str):
+        super().__init__(f"No user with username \"{username}\" found", GrobberExceptionType.USER_NOT_FOUND)

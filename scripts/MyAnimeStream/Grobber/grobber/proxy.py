@@ -33,5 +33,6 @@ def _mongo_client() -> MongoClient:
 requests_dub: bool = LocalProxy(_requests_dub)
 
 mongo_client: MongoClient = LocalProxy(_mongo_client)
-anime_db: Database = LocalProxy(partial(itemgetter(_MONGO_DB_NAME), mongo_client))
-anime_collection: Collection = LocalProxy(partial(itemgetter("animes"), anime_db))
+db: Database = LocalProxy(partial(itemgetter(_MONGO_DB_NAME), mongo_client))
+anime_collection: Collection = LocalProxy(partial(itemgetter("animes"), db))
+user_collection: Collection = LocalProxy(partial(itemgetter("users"), db))

@@ -21,8 +21,13 @@ services:
     restart: always
     expose:
       - "27017"
+    volumes:
+      - database:/data/db
     networks:
       - backend
+
+volumes:
+  database: {}
 
 networks:
   backend: {}
