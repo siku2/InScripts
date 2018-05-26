@@ -16,11 +16,10 @@ function addUserContext() {
 }
 
 
-async function init() {
+function init() {
   observe();
 
   addUserContext();
-  await loadConfig();
 
   route();
 }
@@ -31,7 +30,10 @@ function _init() {
 
 if (ravenDSN) {
   Raven.config(ravenDSN, {
-      release: GM_info.version
+      release: GM_info.script.version,
+      tags: {
+        manager_version: GM_info.version
+      }
     })
     .install();
 

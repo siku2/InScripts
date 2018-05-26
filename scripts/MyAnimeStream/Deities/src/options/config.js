@@ -1,8 +1,33 @@
-let config;
-
 const default_config = {
   dub: false
 };
+
+const _config = {};
+let _configReady = false;
+
+const _configHandler = {
+  async get(obj, prop) {
+    if (prop === "all") {
+      if (!_configReady) {
+        await loadConfig();
+        _configReady = true;
+      }
+      return _config;
+    }
+
+    if (prop in obj) {
+      return obj[prop];
+    } else {
+      if (!_configReady) {
+        await loadConfig();
+        _configReady = true;
+      }
+      return _config[prop];
+    }
+  }
+};
+
+const config = new Proxy(_config, _configHandler);
 
 
 async function loadConfig() {
@@ -12,7 +37,7 @@ async function loadConfig() {
     category: "config"
   });
 
-  config = default_config;
+  Object.assign(_config, default_config);
 
   if (username) {
     let resp;
@@ -28,14 +53,14 @@ async function loadConfig() {
     }
 
     if (resp && resp.success) {
-      Object.assign(config, resp.config);
+      Object.assign(_config, resp.config);
     }
   }
 
   Raven.captureBreadcrumb({
     message: "loaded config",
     data: {
-      config: config
+      config: _config
     },
     level: "info",
     category: "config"
@@ -48,7 +73,7 @@ async function saveConfig() {
     type: "POST",
     contentType: "application/json",
     url: grobberUrl + "/user/" + username + "/config",
-    data: JSON.stringify(config)
+    data: JSON.stringify(_config)
   });
 
   if (resp.success) {
