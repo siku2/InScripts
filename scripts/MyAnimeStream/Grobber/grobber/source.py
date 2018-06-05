@@ -103,10 +103,9 @@ class Anime(abc.ABC):
         return self.uid == other.uid
 
     def __hash__(self) -> int:
-        # if hasattr(self, "_uid") or hasattr(self._req, "_response"):
-        #     return hash(self.uid)
-        # return hash(self._req)
-        return hash(self.uid)
+        if hasattr(self, "_uid") or hasattr(self._req, "_response"):
+            return hash(self.uid)
+        return hash(self._req)
 
     @property
     def _update(self) -> bool:
