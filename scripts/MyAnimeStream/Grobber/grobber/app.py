@@ -27,7 +27,7 @@ class UIDConverter(BaseConverter):
 
 app.url_map.converters["UID"] = UIDConverter
 
-thread_pool = ThreadPoolExecutor(max_workers=5)
+thread_pool = ThreadPoolExecutor(max_workers=10)
 app.register_blueprint(templates)
 app.register_blueprint(users)
 
@@ -43,6 +43,8 @@ def search(query: str) -> Response:
     num_results = cast_argument(request.args.get("results"), int, 1)
     if not (0 < num_results <= 10):
         return error_response(InvalidRequest(f"Can only request up to 10 results (not {num_results})"))
+    import time
+    start = time.time()
     result_iter = sources.search_anime(query, dub=proxy.requests_dub)
     num_consider_results = max(num_results, 10)
     results_pool = []
@@ -51,7 +53,8 @@ def search(query: str) -> Response:
             break
         results_pool.append(result)
     results = sorted(results_pool, key=attrgetter("certainty"), reverse=True)[:num_results]
-    ser_results = list(thread_pool.map(methodcaller("to_dict"), results))
+    ser_results = list(thread_pool.map(methodcaller("to_dict"), results, chunksize=10))
+    print("it took: ", time.time() - start)
     return create_response(anime=ser_results)
 
 

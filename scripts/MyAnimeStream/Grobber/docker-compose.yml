@@ -16,7 +16,7 @@ services:
     depends_on:
       - database
   database:
-    container_name: MongoDB
+    container_name: MyAnimeStream_MongoDB
     image: mongo
     restart: always
     expose:

@@ -16,10 +16,6 @@ class Request:
     def __init__(self, url: str, params: Any = None):
         self._url = url
         self._params = params
-        self._response = None
-        self._success = None
-        self._text = None
-        self._bs = None
 
     def __repr__(self):
         props = (
