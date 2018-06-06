@@ -27,7 +27,7 @@ def mal_episode(uid: UID, index: int) -> Response:
     except GrobberException as e:
         return error_response(e)
     else:
-        return render_template("mal/episode.html", episode_host=episode.host, episode_count=anime.episode_count, episode_index=index)
+        return render_template("mal/episode.html", episode=episode, episode_count=anime.episode_count, episode_index=index)
 
 
 @templates.route("/mal/settings")
@@ -35,3 +35,17 @@ def mal_settings():
     # MultiDicts have Lists for values (because there can be multiple values for the same key but we don't want that, so "to_dict"
     context = request.args.to_dict()
     return render_template("mal/settings.html", **context)
+
+
+@templates.route("/player/<UID:uid>/<int:index>")
+def player(uid: UID, index: int) -> Response:
+    anime = sources.get_anime(uid)
+    if not anime:
+        return error_response(UIDUnknown(uid))
+
+    try:
+        episode = anime.get_episode(index)
+    except GrobberException as e:
+        return error_response(e)
+    else:
+        return render_template("player.html", episode=episode)

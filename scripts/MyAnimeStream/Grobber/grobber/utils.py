@@ -1,5 +1,7 @@
-__all__ = ["create_response", "error_response", "cast_argument"]
+__all__ = ["create_response", "error_response", "cast_argument", "parse_js_json"]
 
+import json
+import re
 from typing import Any, Callable, TypeVar
 
 from flask import Response, jsonify
@@ -37,3 +39,14 @@ def cast_argument(val: T, cls: Callable[[T], T2], default: Any = _DEFAULT) -> T2
             return default
     else:
         return new_val
+
+
+RE_JSON_EXPANDER = re.compile(r"(['\"])?([a-z0-9A-Z_]+)(['\"])?(\s)?:(?=(\s)?[\[\d\"'{])", re.DOTALL)
+RE_JSON_REMOVE_TRAILING_COMMA = re.compile(r"([\]}])\s*,(?=\s*[\]}])")
+
+
+def parse_js_json(text: str):
+    valid_json = RE_JSON_EXPANDER.sub("\"\\2\": ", text).replace("'", "\"")
+    valid_json = RE_JSON_REMOVE_TRAILING_COMMA.sub(r"\1", valid_json)
+    print(valid_json)
+    return json.loads(valid_json)

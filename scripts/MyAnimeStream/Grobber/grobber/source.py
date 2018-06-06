@@ -4,7 +4,7 @@ from collections import namedtuple
 from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
-from typing import Any, Iterator, List, NewType
+from typing import Any, Iterator, List, NewType, Optional
 
 from .decorators import cached_property
 from .request import Request
@@ -25,12 +25,17 @@ class SearchResult(namedtuple("SearchResult", ("anime", "certainty"))):
 
 
 class Episode(abc.ABC):
+    _ATTRS = ("poster", "source", "host_url")
+    ATTRS = ()
+
     _req: Request
     _dirty: bool
 
     def __init__(self, req: Request):
         self._req = req
         self._dirty = False
+
+        self.ATTRS = (*self.ATTRS, *self._ATTRS)
 
     def __repr__(self) -> str:
         return f"Ep. {repr(self._req)}"
@@ -43,23 +48,37 @@ class Episode(abc.ABC):
     def dirty(self, value: bool):
         self._dirty = value
 
-    @cached_property
+    @property
+    def poster(self) -> Optional[str]:
+        return None
+
+    @property
+    def source(self) -> Optional[str]:
+        return self.host.bs.find("video").attrs.get("src")
+
+    @property
     @abc.abstractmethod
-    def host(self) -> str:
+    def host_url(self) -> str:
         ...
+
+    @property
+    def host(self) -> Request:
+        return Request(self.host_url)
 
     @property
     def state(self) -> dict:
         data = {"req": self._req.state}
-        if hasattr(self, "_host"):
-            data["host"] = self._host
+        for attr in self.ATTRS:
+            val = getattr(self, "_" + attr, None)
+            if val is not None:
+                data[attr] = val
         return data
 
     @classmethod
     def from_state(cls, state: dict) -> "Episode":
-        inst = cls(Request.from_state(state["req"]))
-        if "host" in state:
-            inst._host = state["host"]
+        inst = cls(Request.from_state(state.pop("req")))
+        for key, value in state.items():
+            setattr(inst, "_" + key, value)
         return inst
 
 
@@ -138,12 +157,12 @@ class Anime(abc.ABC):
         dub = "-dub" if self.is_dub else ""
         return UID(f"{name}-{anime}{dub}")
 
-    @cached_property
+    @property
     @abc.abstractmethod
     def is_dub(self) -> False:
         ...
 
-    @cached_property
+    @property
     @abc.abstractmethod
     def title(self) -> str:
         ...
@@ -152,7 +171,7 @@ class Anime(abc.ABC):
     def episode_count(self) -> int:
         return len(self.episodes)
 
-    @cached_property
+    @property
     @abc.abstractmethod
     def episodes(self) -> List[Episode]:
         ...

@@ -64,7 +64,7 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
 class NineEpisode(Episode):
 
     @cached_property
-    def host(self) -> str:
+    def host_url(self) -> str:
         return self._req.response.json()["target"]
 
 

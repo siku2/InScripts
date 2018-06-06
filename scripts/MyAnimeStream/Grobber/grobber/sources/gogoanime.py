@@ -1,12 +1,13 @@
 import math
 import re
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from . import register_source
 from ..decorators import cached_property
 from ..exceptions import EpisodeNotFound
 from ..request import Request
 from ..source import Anime, Episode, SearchResult, get_certainty
+from ..utils import parse_js_json
 
 BASE_URL = "https://gogoanime.io"
 SEARCH_URL = BASE_URL + "//search.html"
@@ -20,6 +21,8 @@ RE_CLEAN = re.compile(r"-+")
 RE_DUB_STRIPPER = re.compile(r"\s\(Dub\)$")
 
 RE_NOT_FOUND = re.compile(r"<h1 class=\"entry-title\">Page not found<\/h1>")
+
+RE_EXTRACT_SETUP = re.compile(r"playerInstance\.setup\((.+?)\);", re.DOTALL)
 
 
 def is_not_found_page(req: Request):
@@ -49,10 +52,22 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
         yield Request(link), similarity
 
 
+def extractPlayerData(text: str) -> dict:
+    match = RE_EXTRACT_SETUP.search(text)
+    return parse_js_json(match.group(1))
+
+
 class GogoEpisode(Episode):
+    @cached_property
+    def poster(self) -> Optional[str]:
+        return extractPlayerData(self.host.text).get("image")
 
     @cached_property
-    def host(self) -> str:
+    def source(self) -> str:
+        return extractPlayerData(self.host.text)["sources"][0]["file"]
+
+    @cached_property
+    def host_url(self) -> str:
         return "https:" + self._req.bs.find("iframe")["src"]
 
 
