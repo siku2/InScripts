@@ -1,13 +1,13 @@
 import math
 import re
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, List, Tuple
 
 from . import register_source
 from ..decorators import cached_property
 from ..exceptions import EpisodeNotFound
+from ..models import Anime, Episode, SearchResult, Stream, get_certainty
 from ..request import Request
-from ..source import Anime, Episode, SearchResult, get_certainty
-from ..utils import parse_js_json
+from ..streams import get_stream
 
 BASE_URL = "https://gogoanime.io"
 SEARCH_URL = BASE_URL + "//search.html"
@@ -20,9 +20,7 @@ RE_CLEAN = re.compile(r"-+")
 
 RE_DUB_STRIPPER = re.compile(r"\s\(Dub\)$")
 
-RE_NOT_FOUND = re.compile(r"<h1 class=\"entry-title\">Page not found<\/h1>")
-
-RE_EXTRACT_SETUP = re.compile(r"playerInstance\.setup\((.+?)\);", re.DOTALL)
+RE_NOT_FOUND = re.compile(r"<h1 class=\"entry-title\">Page not found</h1>")
 
 
 def is_not_found_page(req: Request):
@@ -52,19 +50,15 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
         yield Request(link), similarity
 
 
-def extractPlayerData(text: str) -> dict:
-    match = RE_EXTRACT_SETUP.search(text)
-    return parse_js_json(match.group(1))
-
-
 class GogoEpisode(Episode):
-    @cached_property
-    def poster(self) -> Optional[str]:
-        return extractPlayerData(self.host.text).get("image")
-
-    @cached_property
-    def source(self) -> str:
-        return extractPlayerData(self.host.text)["sources"][0]["file"]
+    @property
+    def streams(self) -> List[Stream]:
+        streams = []
+        links = self._req.bs.select("div.anime_muti_link a")
+        for link in links:
+            stream = next(get_stream(Request("http:" + link["data-video"])))
+            streams.append(stream)
+        return streams
 
     @cached_property
     def host_url(self) -> str:
@@ -118,14 +112,6 @@ class GogoAnime(Anime):
     def search(cls, query: str, dub: bool = False) -> Iterator[SearchResult]:
         for req, certainty in search_anime_page(query, dub=dub):
             yield SearchResult(cls(req), certainty)
-
-    @classmethod
-    def get(cls, name: str, dub: bool = False) -> "GogoAnime":
-        potential_page_name = get_potential_page_name(name)
-        if dub:
-            potential_page_name += "-dub"
-        req = Request(ANIME_URL.format(name=potential_page_name))
-        return cls(req)
 
     def get_episode(self, index: int) -> GogoEpisode:
         if not (0 <= index < self.episode_count):

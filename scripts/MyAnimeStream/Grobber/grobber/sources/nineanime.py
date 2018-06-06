@@ -5,7 +5,7 @@ from . import register_source
 from ..decorators import cached_property
 from ..exceptions import EpisodeNotFound
 from ..request import Request
-from ..source import Anime, Episode, SearchResult, get_certainty
+from ..models import Anime, Episode, SearchResult, get_certainty
 
 BASE_URL = "https://9anime.is"
 SEARCH_URL = BASE_URL + "/search"

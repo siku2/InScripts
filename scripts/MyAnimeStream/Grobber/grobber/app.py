@@ -1,18 +1,15 @@
-from concurrent.futures import ThreadPoolExecutor
 from operator import attrgetter, methodcaller
 
-from flask import Flask, Response, redirect, request
+from flask import Flask, Response, redirect, request, url_for
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
 from . import __info__, proxy, sources
 from .exceptions import GrobberException, InvalidRequest, UIDUnknown
-from .source import UID
+from .models import UID
 from .templates import templates
 from .users import users
 from .utils import *
-
-THREAD_WORKERS = 10
 
 app = Flask(__name__)
 sentry = Sentry(app)
@@ -29,7 +26,6 @@ class UIDConverter(BaseConverter):
 
 app.url_map.converters["UID"] = UIDConverter
 
-thread_pool = ThreadPoolExecutor(max_workers=THREAD_WORKERS)
 app.register_blueprint(templates)
 app.register_blueprint(users)
 
@@ -53,7 +49,7 @@ def search(query: str) -> Response:
             break
         results_pool.append(result)
     results = sorted(results_pool, key=attrgetter("certainty"), reverse=True)[:num_results]
-    ser_results = list(thread_pool.map(methodcaller("to_dict"), results, chunksize=THREAD_WORKERS))
+    ser_results = list(thread_pool_map(methodcaller("to_dict"), results))
     return create_response(anime=ser_results)
 
 
@@ -65,28 +61,16 @@ def get_anime(uid: UID) -> Response:
     return create_response(anime.to_dict())
 
 
-# @app.route("/stream/<UID:uid>")
-# def get_streams(uid: UID) -> Response:
-#     anime = sources.get_anime(uid)
-#     if not anime:
-#         return error_response(UIDUnknown(uid))
-#     try:
-#         raw_episodes = anime.episodes
-#     except GrobberException as e:
-#         return error_response(e)
-#     else:
-#         episodes = thread_pool.map(attrgetter("host_url"), raw_episodes, chunksize=THREAD_WORKERS)
-#         return create_response(episodes=list(episodes))
-
-
-@app.route("/stream/<UID:uid>/<int:episode>")
-def get_stream_for_episode(uid: UID, episode: int) -> Response:
+@app.route("/stream/<UID:uid>/<int:index>")
+def get_stream_for_episode(uid: UID, index: int) -> Response:
     anime = sources.get_anime(uid)
     if not anime:
         return error_response(UIDUnknown(uid))
     try:
-        episode = anime.get_episode(episode)
+        episode = anime.get_episode(index)
     except GrobberException as e:
         return error_response(e)
+    if episode.stream.working:
+        return redirect(url_for("templates.player", uid=uid, index=index))
     else:
         return redirect(episode.host_url)

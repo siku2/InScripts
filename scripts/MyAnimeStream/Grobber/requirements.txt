@@ -1,6 +1,8 @@
 beautifulsoup4
 flask
+lxml
 pymongo
 raven[flask]
 requests
 werkzeug
+yarl

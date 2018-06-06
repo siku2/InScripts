@@ -1,7 +1,9 @@
-__all__ = ["create_response", "error_response", "cast_argument", "parse_js_json"]
+__all__ = ["create_response", "error_response", "cast_argument", "parse_js_json", "thread_pool_map"]
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import Any, Callable, TypeVar
 
 from flask import Response, jsonify
@@ -48,5 +50,9 @@ RE_JSON_REMOVE_TRAILING_COMMA = re.compile(r"([\]}])\s*,(?=\s*[\]}])")
 def parse_js_json(text: str):
     valid_json = RE_JSON_EXPANDER.sub("\"\\2\": ", text).replace("'", "\"")
     valid_json = RE_JSON_REMOVE_TRAILING_COMMA.sub(r"\1", valid_json)
-    print(valid_json)
     return json.loads(valid_json)
+
+
+THREAD_WORKERS = 10
+thread_pool = ThreadPoolExecutor(max_workers=THREAD_WORKERS)
+thread_pool_map = partial(thread_pool.map, chunksize=THREAD_WORKERS)

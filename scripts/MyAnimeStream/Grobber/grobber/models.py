@@ -1,13 +1,17 @@
 import abc
+import importlib
 import re
 from collections import namedtuple
 from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
-from typing import Any, Iterator, List, NewType, Optional
+from operator import attrgetter
+from typing import Any, Dict, Iterable, Iterator, List, NewType, Optional
 
 from .decorators import cached_property
 from .request import Request
+from .stateful import BsonType, Stateful
+from .utils import thread_pool_map
 
 UID = NewType("UID", str)
 
@@ -24,18 +28,43 @@ class SearchResult(namedtuple("SearchResult", ("anime", "certainty"))):
                 "certainty": self.certainty}
 
 
-class Episode(abc.ABC):
-    _ATTRS = ("poster", "source", "host_url")
-    ATTRS = ()
+class Stream(Stateful, abc.ABC):
+    INCLUDE_CLS = True
+    ATTRS = ("links",)
+    PRIORITY = 1
 
-    _req: Request
-    _dirty: bool
+    def __iter__(self):
+        return iter(self.links)
+
+    @classmethod
+    @abc.abstractmethod
+    def can_handle(cls, req: Request) -> bool:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def links(self) -> List[str]:
+        ...
+
+    @property
+    def poster(self) -> Optional[str]:
+        return None
+
+    @property
+    def working(self) -> bool:
+        return len(self.links) > 0
+
+    @staticmethod
+    def get_successful_links(sources: Iterable[Request]) -> List[str]:
+        all(thread_pool_map(attrgetter("head_success"), sources))
+        return [source.url for source in sources if source.head_success]
+
+
+class Episode(Stateful, abc.ABC):
+    ATTRS = ("streams", "host_url")
 
     def __init__(self, req: Request):
-        self._req = req
-        self._dirty = False
-
-        self.ATTRS = (*self.ATTRS, *self._ATTRS)
+        super().__init__(req)
 
     def __repr__(self) -> str:
         return f"Ep. {repr(self._req)}"
@@ -49,57 +78,52 @@ class Episode(abc.ABC):
         self._dirty = value
 
     @property
-    def poster(self) -> Optional[str]:
-        return None
+    @abc.abstractmethod
+    def streams(self) -> List[Stream]:
+        ...
 
     @property
-    def source(self) -> Optional[str]:
-        return self.host.bs.find("video").attrs.get("src")
+    def stream(self) -> Optional[Stream]:
+        return next((stream for stream in self.streams if stream.working), None)
+
+    @property
+    def poster(self) -> Optional[str]:
+        return next((stream.poster for stream in self.streams if stream.poster), None)
 
     @property
     @abc.abstractmethod
     def host_url(self) -> str:
         ...
 
-    @property
-    def host(self) -> Request:
-        return Request(self.host_url)
-
-    @property
-    def state(self) -> dict:
-        data = {"req": self._req.state}
-        for attr in self.ATTRS:
-            val = getattr(self, "_" + attr, None)
-            if val is not None:
-                data[attr] = val
-        return data
+    def serialise_special(self, key: str, value: Any) -> BsonType:
+        if key == "streams":
+            return [stream.state for stream in value]
 
     @classmethod
-    def from_state(cls, state: dict) -> "Episode":
-        inst = cls(Request.from_state(state.pop("req")))
-        for key, value in state.items():
-            setattr(inst, "_" + key, value)
-        return inst
+    def deserialise_special(cls, key: str, value: BsonType) -> Any:
+        if key == "streams":
+            streams = []
+            for stream in value:
+                m, c = stream["cls"].rsplit(".", 1)
+                stream_cls = getattr(importlib.import_module(m), c)
+                streams.append(stream_cls.from_state(value))
+            return streams
 
 
-class Anime(abc.ABC):
+class Anime(Stateful, abc.ABC):
     EPISODE_CLS = Episode
 
-    _ATTRS = ("uid", "is_dub", "title", "episode_count", "episodes", "last_update")
-    ATTRS = ()
+    INCLUDE_CLS = True
+    ATTRS = ("id", "is_dub", "title", "episode_count", "episodes", "last_update")
     CHANGING_ATTRS = ("episode_count", "episodes")
     UPDATE_INTERVAL = 60 * 30  # 30 mins should be fine, right?
 
-    _req: Request
-    _dirty: bool
     _last_update: datetime
 
     def __init__(self, req: Request):
-        self._req = req
+        super().__init__(req)
         self._dirty = False
         self._last_update = datetime.now()
-
-        self.ATTRS = (*self.ATTRS, *self._ATTRS)
 
     def __getattribute__(self, name: str) -> Any:
         if name in type(self).CHANGING_ATTRS:
@@ -158,6 +182,14 @@ class Anime(abc.ABC):
         return UID(f"{name}-{anime}{dub}")
 
     @property
+    def id(self) -> UID:
+        return self.uid
+
+    @id.setter
+    def id(self, value: UID):
+        self._uid = value
+
+    @property
     @abc.abstractmethod
     def is_dub(self) -> False:
         ...
@@ -176,47 +208,26 @@ class Anime(abc.ABC):
     def episodes(self) -> List[Episode]:
         ...
 
-    @property
-    def state(self) -> dict:
-        data = {"cls": type(self).__name__, "req": self._req.state}
-        for attr in self.ATTRS:
-            val = getattr(self, "_" + attr, None)
-            if val is not None:
-                if attr == "episodes":
-                    val = [ep.state for ep in val]
-                elif attr == "uid":
-                    attr = "_id"
-                data[attr] = val
-        return data
+    def get_episode(self, index: int) -> Episode:
+        return self.episodes[index]
 
-    @classmethod
-    @abc.abstractmethod
-    def get(cls, name: str, dub: bool = False) -> "Anime":
-        ...
+    def to_dict(self) -> Dict[str, BsonType]:
+        return {"uid": self.uid,
+                "title": self.title,
+                "episodes": self.episode_count,
+                "dub": self.is_dub,
+                "updated": self._last_update.isoformat()}
 
     @classmethod
     @abc.abstractmethod
     def search(cls, query: str, dub: bool = False) -> Iterator[SearchResult]:
         ...
 
+    def serialise_special(self, key: str, value: Any) -> BsonType:
+        if key == "episodes":
+            return [ep.state for ep in value]
+
     @classmethod
-    def from_state(cls, state: dict) -> "Anime":
-        state.pop("cls")
-        inst = cls(Request.from_state(state.pop("req")))
-        for key, value in state.items():
-            if key == "episodes":
-                value = [cls.EPISODE_CLS.from_state(ep) for ep in value]
-            elif key == "_id":
-                key = "uid"
-            setattr(inst, "_" + key, value)
-        return inst
-
-    def get_episode(self, index: int) -> Episode:
-        return self.episodes[index]
-
-    def to_dict(self) -> dict:
-        return {"uid": self.uid,
-                "title": self.title,
-                "episodes": self.episode_count,
-                "dub": self.is_dub,
-                "updated": self._last_update.isoformat()}
+    def deserialise_special(cls, key: str, value: BsonType) -> Any:
+        if key == "episodes":
+            return [cls.EPISODE_CLS.from_state(ep) for ep in value]

@@ -3,14 +3,14 @@ from itertools import chain, zip_longest
 from typing import Dict, Iterator, Optional, Set, Type
 
 from ..proxy import anime_collection
-from ..source import Anime, SearchResult, UID
+from ..models import Anime, SearchResult, UID
 
 _SOURCES = ["gogoanime", "nineanime"]
 SOURCES: Dict[str, Type[Anime]] = {}
 
 
 def register_source(anime: Type[Anime]):
-    SOURCES[anime.__name__] = anime
+    SOURCES[f"{anime.__module__}.{anime.__qualname__}"] = anime
 
 
 def _load_sources():

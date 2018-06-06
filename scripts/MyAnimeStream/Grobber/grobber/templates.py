@@ -2,10 +2,10 @@ from flask import Blueprint, Response, render_template, request
 
 from . import sources
 from .exceptions import GrobberException, UIDUnknown
-from .source import UID
+from .models import UID
 from .utils import *
 
-templates = Blueprint("Templates", __name__, url_prefix="/templates")
+templates = Blueprint("templates", __name__, url_prefix="/templates")
 
 
 @templates.route("/mal/episode/<UID:uid>")

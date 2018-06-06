@@ -1,4 +1,7 @@
 <link rel="stylesheet" href="https://cdn.plyr.io/3.3.10/plyr.css">
-<script src="https://cdn.plyr.io/3.3.10/plyr.js"></script>
 
-<video id="player" src="{{ episode.source }}" poster="{{ episode.poster }}" playsinline controls data-plyr-config=''></video>
+<video id="player" poster="{{ episode.poster }}" playsinline controls data-plyr-config=''>
+    {% for link in episode.stream %}
+        <source src="{{ link }}">
+    {% endfor %}
+</video>
