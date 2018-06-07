@@ -71,6 +71,10 @@ def get_anime(uid: UID) -> Response:
 @app.route("/anime/episode-count", methods=("POST",))
 def get_anime_episode_count() -> Response:
     anime_uids = request.json
+    if not isinstance(anime_uids, list):
+        return error_response(InvalidRequest("Body needs to contain a list of uids!"))
+    if len(anime_uids) > 30:
+        return error_response(InvalidRequest(f"Too many anime requested, max is 30! ({len(anime_uids)})"))
     anime = filter(None, [sources.get_anime(uid) for uid in anime_uids])
     anime_counts = list(thread_pool_map(lambda a: (a.uid, a.episode_count), anime))
     return create_response(anime=dict(anime_counts))
