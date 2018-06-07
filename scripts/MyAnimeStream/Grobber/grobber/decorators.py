@@ -13,7 +13,8 @@ def cached_property(func: Callable):
         if not val:
             val = func(self, *args, **kwargs)
             setattr(self, cache_name, val)
-            self._dirty = True
+            if func.__name__ in self.ATTRS:
+                self._dirty = True
         return val
 
     return property(wrapper)

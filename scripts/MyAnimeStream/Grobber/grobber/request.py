@@ -3,11 +3,14 @@ from typing import Any
 import requests
 import yarl
 from bs4 import BeautifulSoup
+from requests.exceptions import ConnectionError
 
 from .decorators import cached_property
 
 
 class Request:
+    ATTRS = ()
+
     _url: str
     _response: requests.Response
     _success: bool
@@ -18,7 +21,13 @@ class Request:
         self._raw_url = url
         self._params = params
 
-    def __repr__(self):
+    def __hash__(self) -> int:
+        return hash(self.url)
+
+    def __eq__(self, other: "Request") -> bool:
+        return self.url == other.url
+
+    def __repr__(self) -> str:
         props = (
             hasattr(self, "_response") and "REQ",
             hasattr(self, "_text") and "TXT",
@@ -63,11 +72,23 @@ class Request:
 
     @cached_property
     def success(self) -> bool:
-        return self.response.ok
+        try:
+            return self.response.ok
+        except ConnectionError:
+            return False
+
+    @cached_property
+    def head_response(self) -> requests.Response:
+        if hasattr(self, "_response"):
+            return self.response
+        return requests.head(self.url)
 
     @cached_property
     def head_success(self) -> bool:
-        return requests.head(self.url).ok
+        try:
+            return self.head_response.ok
+        except ConnectionError:
+            return False
 
     @cached_property
     def text(self) -> str:

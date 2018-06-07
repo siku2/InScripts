@@ -1,4 +1,4 @@
-__all__ = ["create_response", "error_response", "cast_argument", "parse_js_json", "thread_pool_map"]
+__all__ = ["create_response", "error_response", "cast_argument", "add_http_scheme", "parse_js_json", "thread_pool_map"]
 
 import json
 import re
@@ -41,6 +41,16 @@ def cast_argument(val: T, cls: Callable[[T], T2], default: Any = _DEFAULT) -> T2
             return default
     else:
         return new_val
+
+
+def add_http_scheme(link: str, base_url: str = None) -> str:
+    if link.startswith("//"):
+        return "http:" + link
+    elif not link.startswith(("http://", "https://")):
+        if base_url:
+            return base_url.rstrip("/") + "/" + link
+        return "http://" + link
+    return link
 
 
 RE_JSON_EXPANDER = re.compile(r"(['\"])?([a-z0-9A-Z_]+)(['\"])?(\s)?:(?=(\s)?[\[\d\"'{])", re.DOTALL)

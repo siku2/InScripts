@@ -3,7 +3,6 @@ from typing import Iterator, List, Tuple
 
 from . import register_source
 from ..decorators import cached_property
-from ..exceptions import EpisodeNotFound
 from ..models import Anime, Episode, SearchResult, Stream, get_certainty
 from ..request import Request
 from ..streams import get_stream
@@ -79,21 +78,22 @@ class NineAnime(Anime):
         for req, certainty in search_anime_page(query, dub=dub):
             yield SearchResult(cls(req), certainty)
 
-    def get_episode(self, index: int) -> NineEpisode:
-        if not (0 <= index < self.episode_count):
-            raise EpisodeNotFound(index, self.episode_count)
-        return self.episodes[index]
-
-    def get_episodes(self) -> List[NineEpisode]:
+    @cached_property
+    def raw_eps(self) -> List[NineEpisode]:
         eps = self._req.bs.select("div.server ul.episodes.active li")
         episodes = []
         for ep in eps:
             ep_id = ep.a["data-id"]
             params = {"ts": self.anime_id, "id": ep_id}
-            # params["_"] = generate_token # TODO: le fix
             req = Request(EPISODE_URL, params)
             episodes.append(self.EPISODE_CLS(req))
         return episodes
+
+    def get_episodes(self) -> List[NineEpisode]:
+        return self.raw_eps
+
+    def get_episode(self, index: int) -> NineEpisode:
+        return self.raw_eps[index]
 
 
 register_source(NineAnime)

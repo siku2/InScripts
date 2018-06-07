@@ -1,5 +1,6 @@
 import abc
 import importlib
+import logging
 import re
 from collections import namedtuple
 from contextlib import suppress
@@ -12,6 +13,8 @@ from .decorators import cached_property
 from .request import Request
 from .stateful import BsonType, Stateful
 from .utils import thread_pool_map
+
+log = logging.getLogger(__name__)
 
 UID = NewType("UID", str)
 
@@ -28,13 +31,16 @@ class SearchResult(namedtuple("SearchResult", ("anime", "certainty"))):
                 "certainty": self.certainty}
 
 
+VIDEO_MIME_TYPES = ("video/webm", "video/ogg", "video/mp4", "application/octet-stream")
+
+
 class Stream(Stateful, abc.ABC):
     INCLUDE_CLS = True
     ATTRS = ("links",)
     PRIORITY = 1
 
     def __repr__(self) -> str:
-        return f"Stream {self._req}"
+        return f"{type(self).__name__} Stream: {self._req}"
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.links)
@@ -60,7 +66,13 @@ class Stream(Stateful, abc.ABC):
     @staticmethod
     def get_successful_links(sources: MutableSequence[Request]) -> List[str]:
         all(thread_pool_map(attrgetter("head_success"), sources))
-        return [source.url for source in sources if source.head_success]
+        urls = []
+        for source in sources:
+            if source.head_success:
+                content_type = source.head_response.headers["content-type"]
+                if content_type.startswith(VIDEO_MIME_TYPES):
+                    urls.append(source.url)
+        return urls
 
 
 class Episode(Stateful, abc.ABC):
@@ -70,7 +82,7 @@ class Episode(Stateful, abc.ABC):
         super().__init__(req)
 
     def __repr__(self) -> str:
-        return f"Ep. {repr(self._req)}"
+        return f"{type(self).__name__} Ep.: {repr(self._req)}"
 
     @property
     def dirty(self) -> bool:
@@ -93,9 +105,12 @@ class Episode(Stateful, abc.ABC):
     def streams(self) -> List[Stream]:
         ...
 
-    @property
+    @cached_property
     def stream(self) -> Optional[Stream]:
-        return next((stream for stream in self.streams if stream.working), None)
+        log.debug(f"{self} Searching for working stream...")
+        stream = next((stream for stream in self.streams if stream.working), None)
+        log.debug(f"{self} found stream: {stream}")
+        return stream
 
     @property
     def poster(self) -> Optional[str]:
@@ -143,6 +158,7 @@ class Anime(Stateful, abc.ABC):
     def __getattribute__(self, name: str) -> Any:
         if name in type(self).CHANGING_ATTRS:
             if self._update:
+                log.debug(f"{self}: time for an update")
                 for attr in type(self).CHANGING_ATTRS:
                     with suppress(AttributeError):
                         delattr(self, f"_{attr}")
@@ -225,6 +241,7 @@ class Anime(Stateful, abc.ABC):
     def episodes(self) -> Dict[int, EPISODE_CLS]:
         if hasattr(self, "_episodes"):
             if len(self._episodes) != self.episode_count:
+                log.info("{self} doesn't have all episodes. updating!")
                 for i in range(self.episode_count):
                     if i not in self._episodes:
                         self._episodes[i] = self.get_episode(i)
@@ -244,8 +261,9 @@ class Anime(Stateful, abc.ABC):
     def get_episodes(self) -> List[EPISODE_CLS]:
         ...
 
+    @abc.abstractmethod
     def get_episode(self, index: int) -> EPISODE_CLS:
-        return self.get_episodes()[index]
+        ...
 
     def to_dict(self) -> Dict[str, BsonType]:
         return {"uid": self.uid,

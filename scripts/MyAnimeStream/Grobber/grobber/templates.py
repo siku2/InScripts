@@ -32,7 +32,7 @@ def mal_episode(uid: UID, index: int) -> Response:
 
 @templates.route("/mal/settings")
 def mal_settings():
-    # MultiDicts have Lists for values (because there can be multiple values for the same key but we don't want that, so "to_dict"
+    # MultiDicts have Lists for values (because there can be multiple values for the same key but we don't want that, thus the "to_dict"
     context = request.args.to_dict()
     return render_template("mal/settings.html", **context)
 

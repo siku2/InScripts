@@ -51,11 +51,11 @@ class Stateful(abc.ABC):
         self._dirty = value
 
     def serialise_special(self, key: str, value: Any) -> BsonType:
-        ...
+        raise TypeError(f"Special key \"{key}\" with value {value} doesn't have a handler to serialise!")
 
     @classmethod
     def deserialise_special(cls, key: str, value: BsonType) -> Any:
-        ...
+        raise TypeError(f"Special key \"{key}\" doesn't have a handler to deserialise!")
 
     @property
     def state(self) -> Dict[str, BsonType]:

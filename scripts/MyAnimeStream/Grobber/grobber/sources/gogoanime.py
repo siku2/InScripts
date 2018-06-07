@@ -1,13 +1,16 @@
+import logging
 import math
 import re
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from . import register_source
 from ..decorators import cached_property
-from ..exceptions import EpisodeNotFound
 from ..models import Anime, Episode, SearchResult, Stream, get_certainty
 from ..request import Request
 from ..streams import get_stream
+from ..utils import add_http_scheme
+
+log = logging.getLogger(__name__)
 
 BASE_URL = "https://gogoanime.io"
 SEARCH_URL = BASE_URL + "//search.html"
@@ -56,13 +59,13 @@ class GogoEpisode(Episode):
         streams = []
         links = self._req.bs.select("div.anime_muti_link a")
         for link in links:
-            stream = next(get_stream(Request("http:" + link["data-video"])))
+            stream = next(get_stream(Request(add_http_scheme(link["data-video"]))))
             streams.append(stream)
         return streams
 
     @cached_property
     def host_url(self) -> str:
-        return "https:" + self._req.bs.find("iframe")["src"]
+        return add_http_scheme(self._req.bs.find("iframe")["src"])
 
 
 class GogoAnime(Anime):
@@ -93,6 +96,7 @@ class GogoAnime(Anime):
         last_ep_text = holder["ep_end"]
         if last_ep_text.isnumeric():
             return int(last_ep_text)
+        log.info(f"Last episode label isn't numeric: {last_ep_text}")
         try:
             # I'm totally assuming that decimal values are always .5... Try to stop me
             return int(math.ceil(float(last_ep_text)))
@@ -104,24 +108,27 @@ class GogoAnime(Anime):
         for req, certainty in search_anime_page(query, dub=dub):
             yield SearchResult(cls(req), certainty)
 
-    def get_episode(self, index: int) -> GogoEpisode:
-        if not (0 <= index < self.episode_count):
-            raise EpisodeNotFound(index, self.episode_count)
-
-        page_name = get_potential_page_name(self.title)
-        ep_req = Request(f"{BASE_URL}/{page_name}-episode-{index + 1}")
-        if is_not_found_page(ep_req):
-            return self.get_episodes(index)
-        else:
-            return self.EPISODE_CLS(ep_req)
-
-    def get_episodes(self) -> List[GogoEpisode]:
+    @cached_property
+    def raw_eps(self) -> List[GogoEpisode]:
         episode_req = Request(EPISODE_LIST_URL, {"id": self.anime_id, "ep_start": 0, "ep_end": self.episode_count})
         episode_links = episode_req.bs.find_all("li")
         episodes = []
         for episode_link in reversed(episode_links):
             episodes.append(self.EPISODE_CLS(Request(BASE_URL + episode_link.a["href"].lstrip())))
         return episodes
+
+    def get_episode(self, index: int) -> Optional[GogoEpisode]:
+        page_name = get_potential_page_name(self.title)
+        ep_req = Request(f"{BASE_URL}/{page_name}-episode-{index + 1}")
+        log.debug(f"Trying to predict episode link {ep_req}")
+        if is_not_found_page(ep_req):
+            log.debug("-> Prediction Invalid, manually fetching...")
+            return self.raw_eps[index]
+        else:
+            return self.EPISODE_CLS(ep_req)
+
+    def get_episodes(self) -> List[GogoEpisode]:
+        return self.raw_eps
 
 
 register_source(GogoAnime)

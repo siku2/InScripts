@@ -1,7 +1,11 @@
+import logging
 from operator import attrgetter, methodcaller
 
+import raven
 from flask import Flask, Response, redirect, request, url_for
+from raven.conf import setup_logging
 from raven.contrib.flask import Sentry
+from raven.handlers.logging import SentryHandler
 from werkzeug.routing import BaseConverter
 
 from . import __info__, proxy, sources
@@ -12,8 +16,11 @@ from .users import users
 from .utils import *
 
 app = Flask(__name__)
-sentry = Sentry(app)
-sentry.client.release = __info__.__version__
+sentry_client = raven.Client(release=__info__.__version__)
+Sentry(app, sentry_client)
+sentry_handler = SentryHandler(sentry_client)
+sentry_handler.setLevel(logging.ERROR)
+setup_logging(sentry_handler)
 
 
 class UIDConverter(BaseConverter):
