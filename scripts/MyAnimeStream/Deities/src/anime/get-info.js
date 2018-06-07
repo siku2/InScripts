@@ -18,7 +18,9 @@ async function getAnimeInfo() {
     }
   }
   console.log("Searching for anime", animeName);
-  const result = await $.getJSON(grobberUrl + "/search/" + animeName);
+  const result = await $.getJSON(grobberUrl + "/search/" + animeName, {
+    dub: await config.dub
+  });
   if (!result.success || result.anime.length === 0) {
     console.error("Couldn't find anime \"" + animeName + "\"");
     return false;

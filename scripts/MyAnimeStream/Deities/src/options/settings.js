@@ -47,9 +47,7 @@ async function submitSettings() {
 
   dataArray
     .forEach((item) => {
-      if (config.hasOwnProperty(item.name)) {
-        config[item.name] = formParseValue(item.value);
-      }
+      config[item.name] = formParseValue(item.value);
     });
 
   const success = await saveConfig();
