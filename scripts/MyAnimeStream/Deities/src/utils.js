@@ -1,6 +1,18 @@
+async function postJSON(url, data) {
+    return await $.ajax({
+        type: "POST",
+        contentType: "application/json",
+        url: url,
+        data: JSON.stringify(data)
+    });
+}
+
+function sleep(timeout) {
+    return new Promise(res => setTimeout(res, timeout));
+}
+
 function _animeNotFoundMsg() {
-    const animeProvId = animeName.replace(/\W+/g, "")
-        .toLowerCase();
+    const animeProvId = animeName.replace(/\W+/g, "").toLowerCase();
     console.log(animeProvId);
     const cookieName = "already-warned-" + animeProvId;
     if (!Cookies.get(cookieName)) {

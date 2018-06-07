@@ -20,10 +20,12 @@ async function route() {
     if (path.match(/^\/anime\/\d+\/[\w-]+\/?$/)) {
         showAnimeDetails();
     } else if (path.match(/^\/anime\/\d+\/[\w-]+\/episode\/?$/)) {
-        showAnimeEpsiodes();
+        await showAnimeEpsiodes();
     } else if (path.match(/^\/anime\/\d+\/[\w-]+\/episode\/\d+\/?$/)) {
-        showAnimeEpisode();
+        await showAnimeEpisode();
+    } else if (path.match(/^\/animelist\/\w+$/)) {
+        await highlightAnimeWithUnwatchedEpisodes();
     } else if (path.match(/^\/editprofile\.php$/) && params.match(/^\?go=myanimestream$/)) {
-        showSettings();
+        await showSettings();
     }
 }

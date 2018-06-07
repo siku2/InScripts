@@ -25,8 +25,7 @@ async function showSettings() {
     const container = document.querySelector("div#content div form")
         .parentElement;
 
-    const html = await $.get(grobberUrl + "/templates/mal/settings", await config.all);
-    container.innerHTML = html;
+    container.innerHTML = await $.get(grobberUrl + "/templates/mal/settings", await config.all);
     document.querySelector("input[name=submit]")
         .addEventListener("click", submitSettings);
 }

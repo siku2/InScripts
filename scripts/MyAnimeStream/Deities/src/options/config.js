@@ -70,12 +70,7 @@ async function loadConfig() {
 
 
 async function saveConfig() {
-    const resp = await $.ajax({
-        type: "POST",
-        contentType: "application/json",
-        url: grobberUrl + "/user/" + username + "/config",
-        data: JSON.stringify(_config)
-    });
+    const resp = await postJSON(grobberUrl + "/user/" + username + "/config", JSON.stringify(_config));
 
     if (resp.success) {
         console.log("saved config");
