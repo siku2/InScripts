@@ -4,7 +4,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, List
 
 from flask import Response, jsonify
 

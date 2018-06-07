@@ -7,7 +7,7 @@ from .utils import *
 users = Blueprint("Users", __name__, url_prefix="/user")
 
 
-@users.route("/<username>/config", methods=("GET",))
+@users.route("/<username>/config")
 def get_user_config(username: str) -> Response:
     user_data = proxy.user_collection.find_one(username)
     if user_data:

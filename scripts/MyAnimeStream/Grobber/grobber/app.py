@@ -2,7 +2,7 @@ import logging
 from operator import attrgetter, methodcaller
 
 import raven
-from flask import Flask, Response, redirect, request, url_for
+from flask import Flask, Response, redirect, render_template, request
 from raven.conf import setup_logging
 from raven.contrib.flask import Sentry
 from raven.handlers.logging import SentryHandler
@@ -68,6 +68,14 @@ def get_anime(uid: UID) -> Response:
     return create_response(anime.to_dict())
 
 
+@app.route("/anime/episode-count", methods=("POST",))
+def get_anime_episode_count() -> Response:
+    anime_uids = request.json
+    anime = filter(None, [sources.get_anime(uid) for uid in anime_uids])
+    anime_counts = list(thread_pool_map(lambda a: (a.uid, a.episode_count), anime))
+    return create_response(anime=dict(anime_counts))
+
+
 @app.route("/stream/<UID:uid>/<int:index>")
 def get_stream_for_episode(uid: UID, index: int) -> Response:
     anime = sources.get_anime(uid)
@@ -78,6 +86,6 @@ def get_stream_for_episode(uid: UID, index: int) -> Response:
     except GrobberException as e:
         return error_response(e)
     if episode.stream:
-        return redirect(url_for("templates.player", uid=uid, index=index), )
+        return render_template("player.html", episode=episode)
     else:
         return redirect(episode.host_url)
