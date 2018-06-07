@@ -51,7 +51,7 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
 
 
 class GogoEpisode(Episode):
-    @property
+    @cached_property
     def streams(self) -> List[Stream]:
         streams = []
         links = self._req.bs.select("div.anime_muti_link a")
@@ -99,15 +99,6 @@ class GogoAnime(Anime):
         except ValueError:
             raise ValueError(f"Couldn't understand last episode label for {self}: \"{last_ep_text}\"")
 
-    @cached_property
-    def episodes(self) -> List[GogoEpisode]:
-        episode_req = Request(EPISODE_LIST_URL, {"id": self.anime_id, "ep_start": 0, "ep_end": self.episode_count})
-        episode_links = episode_req.bs.find_all("li")
-        episodes = []
-        for episode_link in reversed(episode_links):
-            episodes.append(self.EPISODE_CLS(Request(BASE_URL + episode_link.a["href"].lstrip())))
-        return episodes
-
     @classmethod
     def search(cls, query: str, dub: bool = False) -> Iterator[SearchResult]:
         for req, certainty in search_anime_page(query, dub=dub):
@@ -116,15 +107,21 @@ class GogoAnime(Anime):
     def get_episode(self, index: int) -> GogoEpisode:
         if not (0 <= index < self.episode_count):
             raise EpisodeNotFound(index, self.episode_count)
-        if hasattr(self, "_episodes"):
-            return self.episodes[index]
 
         page_name = get_potential_page_name(self.title)
         ep_req = Request(f"{BASE_URL}/{page_name}-episode-{index + 1}")
-        if not is_not_found_page(ep_req):
-            return self.EPISODE_CLS(ep_req)
+        if is_not_found_page(ep_req):
+            return self.get_episodes(index)
         else:
-            return self.episodes[index]
+            return self.EPISODE_CLS(ep_req)
+
+    def get_episodes(self) -> List[GogoEpisode]:
+        episode_req = Request(EPISODE_LIST_URL, {"id": self.anime_id, "ep_start": 0, "ep_end": self.episode_count})
+        episode_links = episode_req.bs.find_all("li")
+        episodes = []
+        for episode_link in reversed(episode_links):
+            episodes.append(self.EPISODE_CLS(Request(BASE_URL + episode_link.a["href"].lstrip())))
+        return episodes
 
 
 register_source(GogoAnime)

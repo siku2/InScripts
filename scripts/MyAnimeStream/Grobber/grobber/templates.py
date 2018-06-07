@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, render_template, request
 
 from . import sources
-from .exceptions import GrobberException, UIDUnknown
+from .exceptions import GrobberException, StreamNotFound, UIDUnknown
 from .models import UID
 from .utils import *
 
@@ -23,7 +23,7 @@ def mal_episode(uid: UID, index: int) -> Response:
         return error_response(UIDUnknown(uid))
 
     try:
-        episode = anime.get_episode(index)
+        episode = anime[index]
     except GrobberException as e:
         return error_response(e)
     else:
@@ -44,8 +44,11 @@ def player(uid: UID, index: int) -> Response:
         return error_response(UIDUnknown(uid))
 
     try:
-        episode = anime.get_episode(index)
+        episode = anime[index]
     except GrobberException as e:
         return error_response(e)
-    else:
-        return render_template("player.html", episode=episode)
+
+    if not episode.stream:
+        return error_response(StreamNotFound())
+
+    return render_template("player.html", episode=episode)

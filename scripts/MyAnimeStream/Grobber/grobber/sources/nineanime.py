@@ -4,8 +4,9 @@ from typing import Iterator, List, Tuple
 from . import register_source
 from ..decorators import cached_property
 from ..exceptions import EpisodeNotFound
+from ..models import Anime, Episode, SearchResult, Stream, get_certainty
 from ..request import Request
-from ..models import Anime, Episode, SearchResult, get_certainty
+from ..streams import get_stream
 
 BASE_URL = "https://9anime.is"
 SEARCH_URL = BASE_URL + "/search"
@@ -33,35 +34,10 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
         yield Request(link), similarity
 
 
-## THIS IS JUST BROKEN
-# NINEANIME_DD = "gIXCaNh"
-#
-#
-# def _gen_s(text: str) -> int:
-#     i = 0
-#     for e, char in enumerate(text):
-#         i += ord(char) * e + e
-#     return i
-#
-#
-# def _gen_a(t: str, e: str) -> str:
-#     n = 0
-#     for i in range(max(len(t), len(e))):
-#         n += ord(e[i]) if i < len(e) else 0
-#         n += ord(t[i]) if i < len(t) else 0
-#     return hex(n)[2:]
-#
-#
-# def generate_token(params: dict, initial_state: int = 0):
-#     keys = params.keys()
-#     val = _gen_s(NINEANIME_DD) + initial_state
-#     for key in keys:
-#         trans = _gen_a(NINEANIME_DD + key, str(params[key]))
-#         val += _gen_s(trans)
-#     return val - 33
-
-
 class NineEpisode(Episode):
+    @cached_property
+    def streams(self) -> List[Stream]:
+        return [next(get_stream(Request(self.host_url)))]
 
     @cached_property
     def host_url(self) -> str:
@@ -98,8 +74,17 @@ class NineAnime(Anime):
             return 0
         return len(eps)
 
-    @cached_property
-    def episodes(self) -> List[NineEpisode]:
+    @classmethod
+    def search(cls, query: str, dub: bool = False) -> Iterator[SearchResult]:
+        for req, certainty in search_anime_page(query, dub=dub):
+            yield SearchResult(cls(req), certainty)
+
+    def get_episode(self, index: int) -> NineEpisode:
+        if not (0 <= index < self.episode_count):
+            raise EpisodeNotFound(index, self.episode_count)
+        return self.episodes[index]
+
+    def get_episodes(self) -> List[NineEpisode]:
         eps = self._req.bs.select("div.server ul.episodes.active li")
         episodes = []
         for ep in eps:
@@ -109,20 +94,6 @@ class NineAnime(Anime):
             req = Request(EPISODE_URL, params)
             episodes.append(self.EPISODE_CLS(req))
         return episodes
-
-    @classmethod
-    def search(cls, query: str, dub: bool = False) -> Iterator[SearchResult]:
-        for req, certainty in search_anime_page(query, dub=dub):
-            yield SearchResult(cls(req), certainty)
-
-    @classmethod
-    def get(cls, name: str, dub: bool = False) -> "NineAnime":
-        return next(cls.search(name, dub=dub)).anime
-
-    def get_episode(self, index: int) -> NineEpisode:
-        if not (0 <= index < self.episode_count):
-            raise EpisodeNotFound(index, self.episode_count)
-        return self.episodes[index]
 
 
 register_source(NineAnime)

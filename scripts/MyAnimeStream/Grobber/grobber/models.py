@@ -6,7 +6,7 @@ from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
 from operator import attrgetter
-from typing import Any, Dict, Iterable, Iterator, List, NewType, Optional
+from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional
 
 from .decorators import cached_property
 from .request import Request
@@ -33,7 +33,10 @@ class Stream(Stateful, abc.ABC):
     ATTRS = ("links",)
     PRIORITY = 1
 
-    def __iter__(self):
+    def __repr__(self) -> str:
+        return f"Stream {self._req}"
+
+    def __iter__(self) -> Iterator[str]:
         return iter(self.links)
 
     @classmethod
@@ -55,7 +58,7 @@ class Stream(Stateful, abc.ABC):
         return len(self.links) > 0
 
     @staticmethod
-    def get_successful_links(sources: Iterable[Request]) -> List[str]:
+    def get_successful_links(sources: MutableSequence[Request]) -> List[str]:
         all(thread_pool_map(attrgetter("head_success"), sources))
         return [source.url for source in sources if source.head_success]
 
@@ -71,11 +74,19 @@ class Episode(Stateful, abc.ABC):
 
     @property
     def dirty(self) -> bool:
-        return self._dirty
+        if self._dirty:
+            return True
+        else:
+            if hasattr(self, "_streams"):
+                return any(stream.dirty for stream in self._streams)
+            return False
 
     @dirty.setter
     def dirty(self, value: bool):
         self._dirty = value
+        if hasattr(self, "_streams"):
+            for stream in self._streams:
+                stream.dirty = value
 
     @property
     @abc.abstractmethod
@@ -106,7 +117,7 @@ class Episode(Stateful, abc.ABC):
             for stream in value:
                 m, c = stream["cls"].rsplit(".", 1)
                 stream_cls = getattr(importlib.import_module(m), c)
-                streams.append(stream_cls.from_state(value))
+                streams.append(stream_cls.from_state(stream))
             return streams
 
 
@@ -115,15 +126,19 @@ class Anime(Stateful, abc.ABC):
 
     INCLUDE_CLS = True
     ATTRS = ("id", "is_dub", "title", "episode_count", "episodes", "last_update")
-    CHANGING_ATTRS = ("episode_count", "episodes")
+    CHANGING_ATTRS = ("episode_count",)
     UPDATE_INTERVAL = 60 * 30  # 30 mins should be fine, right?
 
+    _episodes: Dict[int, EPISODE_CLS]
     _last_update: datetime
 
     def __init__(self, req: Request):
         super().__init__(req)
         self._dirty = False
         self._last_update = datetime.now()
+
+    def __getitem__(self, item: int) -> EPISODE_CLS:
+        return self.get(item)
 
     def __getattribute__(self, name: str) -> Any:
         if name in type(self).CHANGING_ATTRS:
@@ -135,6 +150,9 @@ class Anime(Stateful, abc.ABC):
 
     def __len__(self) -> int:
         return self.episode_count
+
+    def __iter__(self) -> Iterator[EPISODE_CLS]:
+        return iter(self.episodes.values())
 
     def __repr__(self) -> str:
         return self.uid
@@ -164,14 +182,14 @@ class Anime(Stateful, abc.ABC):
             return True
         else:
             if hasattr(self, "_episodes"):
-                return any(ep.dirty for ep in self._episodes)
+                return any(ep.dirty for ep in self._episodes.values())
             return False
 
     @dirty.setter
     def dirty(self, value: bool):
         self._dirty = value
         if hasattr(self, "_episodes"):
-            for ep in self._episodes:
+            for ep in self._episodes.values():
                 ep.dirty = value
 
     @cached_property
@@ -201,15 +219,33 @@ class Anime(Stateful, abc.ABC):
 
     @cached_property
     def episode_count(self) -> int:
-        return len(self.episodes)
+        return len(self.get_episodes())
 
     @property
+    def episodes(self) -> Dict[int, EPISODE_CLS]:
+        if hasattr(self, "_episodes"):
+            if len(self._episodes) != self.episode_count:
+                for i in range(self.episode_count):
+                    if i not in self._episodes:
+                        self._episodes[i] = self.get_episode(i)
+        else:
+            eps = self.get_episodes()
+            self._episodes = dict(enumerate(eps))
+        return self._episodes
+
+    def get(self, index: int) -> EPISODE_CLS:
+        if hasattr(self, "_episodes"):
+            ep = self._episodes.get(index)
+            if ep is not None:
+                return ep
+        return self.episodes[index]
+
     @abc.abstractmethod
-    def episodes(self) -> List[Episode]:
+    def get_episodes(self) -> List[EPISODE_CLS]:
         ...
 
-    def get_episode(self, index: int) -> Episode:
-        return self.episodes[index]
+    def get_episode(self, index: int) -> EPISODE_CLS:
+        return self.get_episodes()[index]
 
     def to_dict(self) -> Dict[str, BsonType]:
         return {"uid": self.uid,
@@ -225,9 +261,9 @@ class Anime(Stateful, abc.ABC):
 
     def serialise_special(self, key: str, value: Any) -> BsonType:
         if key == "episodes":
-            return [ep.state for ep in value]
+            return {str(i): ep.state for i, ep in value.items()}
 
     @classmethod
     def deserialise_special(cls, key: str, value: BsonType) -> Any:
         if key == "episodes":
-            return [cls.EPISODE_CLS.from_state(ep) for ep in value]
+            return {int(i): cls.EPISODE_CLS.from_state(ep) for i, ep in value.items()}

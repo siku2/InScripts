@@ -67,10 +67,10 @@ def get_stream_for_episode(uid: UID, index: int) -> Response:
     if not anime:
         return error_response(UIDUnknown(uid))
     try:
-        episode = anime.get_episode(index)
+        episode = anime[index]
     except GrobberException as e:
         return error_response(e)
-    if episode.stream.working:
-        return redirect(url_for("templates.player", uid=uid, index=index))
+    if episode.stream:
+        return redirect(url_for("templates.player", uid=uid, index=index), )
     else:
         return redirect(episode.host_url)

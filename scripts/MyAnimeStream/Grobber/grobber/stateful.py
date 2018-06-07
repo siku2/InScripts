@@ -29,7 +29,7 @@ def check_container_bson(data: Any) -> bool:
 
 
 class Stateful(abc.ABC):
-    __SPECIAL_MARKER = "::special"
+    __SPECIAL_MARKER = "$state"
     INCLUDE_CLS = False
     ATTRS = ()
 
@@ -41,6 +41,14 @@ class Stateful(abc.ABC):
 
         self.ATTRS = set(attr for base in type(self).__mro__ for attr in getattr(base, "ATTRS", []))
         self._dirty = False
+
+    @property
+    def dirty(self) -> bool:
+        return self._dirty
+
+    @dirty.setter
+    def dirty(self, value: bool):
+        self._dirty = value
 
     def serialise_special(self, key: str, value: Any) -> BsonType:
         ...
@@ -58,8 +66,8 @@ class Stateful(abc.ABC):
             val = getattr(self, "_" + attr, None)
             if val is not None:
                 if not check_container_bson(val):
-                    attr += self.__SPECIAL_MARKER
                     val = self.serialise_special(attr, val)
+                    attr += self.__SPECIAL_MARKER
                 data[attr] = val
         return data
 
