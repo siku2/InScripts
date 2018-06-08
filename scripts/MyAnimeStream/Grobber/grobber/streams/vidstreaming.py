@@ -30,7 +30,10 @@ class Vidstreaming(Stream):
 
     @cached_property
     def poster(self) -> Optional[str]:
-        return extract_player_data(self._req.text).get("image")
+        link = extract_player_data(self._req.text).get("image")
+        if link and Request(link).head_success:
+            return link
+        return None
 
     @cached_property
     def links(self) -> List[str]:
