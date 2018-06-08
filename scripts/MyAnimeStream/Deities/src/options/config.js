@@ -1,6 +1,8 @@
 const default_config = {
     dub: false,
-    replaceStream: false
+    replaceStream: true,
+    updateEpisodesSeen: true,
+    minWatchPercentageForSeen: .75
 };
 
 const _config = {};

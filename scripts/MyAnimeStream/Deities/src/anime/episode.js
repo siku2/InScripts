@@ -1,19 +1,97 @@
+let currentPlayer;
+let currentEpisodeIndex;
+
+async function updateAnimeStatus(update) {
+    const status = $("#myinfo_status");
+    const score = $("#myinfo_score");
+    const numWatchedEps = $("#myinfo_watchedeps");
+    const data = {
+        csrf_token: $("meta[name=\"csrf_token\"]").attr("content"),
+        anime_id: parseInt($("#myinfo_anime_id").val()),
+        status: parseInt(status.val()),
+        score: parseInt(score.val()),
+        num_watched_episodes: parseInt(numWatchedEps.val()) || 0
+    };
+    Object.assign(data, update);
+
+    await $.post("/ownlist/anime/edit.json", JSON.stringify(data));
+    status.val(data.status);
+    score.val(data.score);
+    numWatchedEps.val(data.num_watched_episodes);
+}
+
+async function finishedEpisode() {
+    if (!await config.updateEpisodesSeen) {
+        console.log("Not updating anime status because of user settings");
+    }
+
+    const data = {
+        status: 1
+    };
+    const numWatched = parseInt($("#myinfo_watchedeps").val()) || 0;
+    if (currentEpisodeIndex >= numWatched) {
+        data.num_watched_episodes = currentEpisodeIndex;
+    }
+    console.log("updating data to:", data);
+    await updateAnimeStatus(data);
+}
+
+async function onVideoEnd() {
+    await finishedEpisode();
+    if (currentEpisodeIndex + 1 < animeEpisodes) {
+        const url = new URL((currentEpisodeIndex + 1).toString(), window.location.href);
+        url.searchParams.set("autoplay", "true");
+        window.location.href = url.toString();
+    } else {
+        console.log("reached the last episode");
+    }
+}
+
+async function onPageLeave(event) {
+    if (!currentPlayer.ended) {
+        const percentage = currentPlayer.currentTime / currentPlayer.duration;
+        const minPercentage = await config.minWatchPercentageForSeen;
+        if (percentage > minPercentage) {
+            console.log("Left page with video at " + Math.round(100 * percentage).toString() + "% Counting as finished!");
+            await finishedEpisode();
+        }
+    }
+}
+
+function setupPlyr() {
+    if (document.getElementById("player")) {
+        currentPlayer = new Plyr("#player");
+        currentPlayer.on("ended", onVideoEnd);
+        window.addEventListener("beforeunload", onPageLeave);
+        console.log(currentPlayer);
+    } else {
+        console.warn("Couldn't find player, assuming this is an embed!");
+    }
+}
+
+async function createPlayer(container) {
+    const html = await $.get(grobberUrl + "/stream/" + animeUID + "/" + (currentEpisodeIndex - 1).toString());
+    container.html(html);
+    setupPlyr();
+}
+
+
 async function showAnimeEpisode() {
-    const episodeIndex = parseInt(window.location.pathname.match(/^\/anime\/\d+\/[\w-]+\/episode\/(\d+)\/?$/)[1]);
+    currentEpisodeIndex = parseInt(window.location.pathname.match(/^\/anime\/\d+\/[\w-]+\/episode\/(\d+)\/?$/)[1]);
     const embedContainer = $("div.video-embed.clearfix");
 
     if (embedContainer.length > 0) {
-        console.log("Manipulating existing video embed");
-        const episodeStream = grobberUrl + "/stream/" + animeUID + "/" + (episodeIndex - 1)
-            .toString();
-        embedContainer.html($("<iframe allowfullscreen></iframe>")
-            .attr("src", episodeStream)
-            .width(800)
-            .height(535));
-        $("div.information-right.fl-r.clearfix")
-            .remove();
-        document.querySelector("div.di-b>a")
-            .setAttribute("href", "../episode");
+        if (await config.replaceStream) {
+            console.log("Manipulating player");
+            createPlayer(embedContainer);
+
+            $("div.information-right.fl-r.clearfix").remove(); // Provided by Crunchyroll removal
+        } else {
+            console.info("Not changing player because of user settings");
+        }
+
+        document.querySelector("div.di-b>a").setAttribute("href", "../episode"); // show all episodes shouldn't link to "videos"
+
         const episodeSlideCount = parseInt($("li.btn-anime:last span.episode-number")[0].innerText.split(" ")[1]);
 
         if (episodeSlideCount < animeEpisodes) {
@@ -30,8 +108,7 @@ async function showAnimeEpisode() {
 
             for (let i = episodeSlideCount; i < animeEpisodes; i++) {
                 const episodeObject = episodePrefab.clone();
-                const epIdx = (i + 1)
-                    .toString();
+                const epIdx = (i + 1).toString();
                 episodeObject.find("span.episode-number")
                     .text("Episode " + epIdx);
                 episodeObject.find("a.link")
@@ -42,13 +119,12 @@ async function showAnimeEpisode() {
         }
     } else {
         console.log("Creating new video embed and page content");
-        const episodeHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID + "/" + (episodeIndex - 1)
-            .toString());
         document.querySelector("td>div.js-scrollfix-bottom-rel>div>div>table>tbody")
-            .innerHTML = episodeHTML;
+            .innerHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID + "/" + (currentEpisodeIndex - 1).toString());
+        setupPlyr();
     }
+    // Scroll the video slide to the correct position!
     document.querySelector("#vue-video-slide")
-        .style.left = (-document.querySelector("li.btn-anime.play")
-        .offsetLeft)
+        .style.left = (-document.querySelector("li.btn-anime.play").offsetLeft)
         .toString() + "px";
 }

@@ -3,8 +3,7 @@ async function showAnimeEpsiodes() {
 
     if (episodeTable) {
         console.log("Manipulating existing episode table...");
-        const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data")
-            .length;
+        const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data").length;
         if (episodeCount < animeEpisodes) {
             const episodeTableDescendHeader = document.querySelector("table.episode_list.descend tr.episode-list-header");
 
@@ -42,9 +41,7 @@ async function showAnimeEpsiodes() {
         }
     } else {
         console.log("Recreating episode table...");
-        const episodeListHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID);
-        document.querySelector("div.mb4")
-            .outerHTML = episodeListHTML;
+        document.querySelector("div.mb4").outerHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID);
     }
 
     const episodeCountDisplay = document.querySelector("h2>span.di-ib");

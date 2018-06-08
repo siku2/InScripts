@@ -3,9 +3,7 @@ let animeUID;
 let animeEpisodes;
 
 async function getAnimeInfo() {
-    animeName = document.querySelector("h1>span[itemprop=name]")
-        .innerText;
-
+    animeName = document.querySelector("h1>span[itemprop=name]").innerText;
     animeUID = localStorage.getItem(animeName);
 
     if (animeUID) {
