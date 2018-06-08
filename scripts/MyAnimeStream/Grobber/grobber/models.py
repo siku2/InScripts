@@ -36,7 +36,7 @@ VIDEO_MIME_TYPES = ("video/webm", "video/ogg", "video/mp4", "application/octet-s
 
 class Stream(Stateful, abc.ABC):
     INCLUDE_CLS = True
-    ATTRS = ("links",)
+    ATTRS = ("links", "poster")
     PRIORITY = 1
 
     def __repr__(self) -> str:
@@ -55,7 +55,7 @@ class Stream(Stateful, abc.ABC):
     def links(self) -> List[str]:
         ...
 
-    @property
+    @cached_property
     def poster(self) -> Optional[str]:
         return None
 
@@ -112,7 +112,7 @@ class Episode(Stateful, abc.ABC):
         log.debug(f"{self} found stream: {stream}")
         return stream
 
-    @property
+    @cached_property
     def poster(self) -> Optional[str]:
         return next((stream.poster for stream in self.streams if stream.poster), None)
 

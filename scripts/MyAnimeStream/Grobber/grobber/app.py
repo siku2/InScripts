@@ -93,3 +93,15 @@ def get_stream_for_episode(uid: UID, index: int) -> Response:
         return render_template("player.html", episode=episode)
     else:
         return redirect(episode.host_url)
+
+
+@app.route("/stream/<UID:uid>/<int:index>/poster")
+def get_episode_poster(uid: UID, index: int) -> Response:
+    anime = sources.get_anime(uid)
+    if not anime:
+        return error_response(UIDUnknown(uid))
+    try:
+        episode = anime[index]
+    except GrobberException as e:
+        return error_response(e)
+    return redirect(episode.poster)
