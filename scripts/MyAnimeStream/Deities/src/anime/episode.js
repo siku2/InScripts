@@ -25,9 +25,12 @@ async function finishedEpisode() {
         console.log("Not updating anime status because of user settings");
     }
 
+    const totalEpisodes = parseInt($("#curEps").text());
+
     const data = {
-        status: 1
+        status: (currentEpisodeIndex >= totalEpisodes) ? 2 : 1
     };
+
     const numWatched = parseInt($("#myinfo_watchedeps").val()) || 0;
     if (currentEpisodeIndex >= numWatched) {
         data.num_watched_episodes = currentEpisodeIndex;

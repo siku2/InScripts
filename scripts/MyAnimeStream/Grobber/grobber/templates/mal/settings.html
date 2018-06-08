@@ -20,7 +20,13 @@
         <tr>
             <td>Anime Translation</td>
             <td>
-                {{ selection("dub", [("Dubbed", "true"), ("Subbed", "false")], dub|default("true")) }}
+                {{ selection("dub", [("Dubbed", "true"), ("Subbed", "false")], dub|default("false")) }}
+            </td>
+        </tr>
+        <tr>
+            <td>Replace Crunchyroll embed</td>
+            <td>
+                {{ selection("replaceStream", [("Yes", "true"), ("No", "false")], replaceStream|default("true")) }}
             </td>
         </tr>
         <tr>
