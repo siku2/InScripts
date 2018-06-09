@@ -14,20 +14,20 @@
         <tbody>
         <tr>
             <td colspan="2">
-                <div class="normal_header">General Settings</div>
+                <div class="normal_header">Episode Settings</div>
             </td>
         </tr>
         <tr>
             <td>Anime Translation</td>
-            <td>
-                {{ selection("dub", [("Dubbed", "true"), ("Subbed", "false")], dub|default("false")) }}
-            </td>
+            <td>{{ selection("dub", [("Dubbed", "true"), ("Subbed", "false")], dub|default("false")) }}</td>
         </tr>
         <tr>
             <td>Replace Crunchyroll embed</td>
-            <td>
-                {{ selection("replaceStream", [("Yes", "true"), ("No", "false")], replaceStream|default("true")) }}
-            </td>
+            <td>{{ selection("replaceStream", [("Yes", "true"), ("No", "false")], replaceStream|default("true")) }}</td>
+        </tr>
+        <tr>
+            <td>Update Anime status</td>
+            <td>{{ selection("updateAnimeStatus", [("Yes", "true"), ("No", "false")], updateAnimeStatus|default("true")) }}</td>
         </tr>
         <tr>
             <td></td>
