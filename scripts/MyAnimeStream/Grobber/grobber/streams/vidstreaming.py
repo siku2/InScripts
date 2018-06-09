@@ -24,10 +24,6 @@ def extract_player_data(text: str) -> dict:
 class Vidstreaming(Stream):
     HOST = "vidstreaming.io"
 
-    @classmethod
-    def can_handle(cls, req: Request) -> bool:
-        return req.yarl.host == cls.HOST
-
     @cached_property
     def poster(self) -> Optional[str]:
         link = extract_player_data(self._req.text).get("image")

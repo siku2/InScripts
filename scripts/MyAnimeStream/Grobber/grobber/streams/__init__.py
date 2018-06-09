@@ -1,11 +1,14 @@
 import importlib
+import logging
 from operator import attrgetter
 from typing import Iterator, List, Type
 
 from ..models import Stream
 from ..request import Request
 
-_STREAMS = ["rapidvideo", "vidstreaming", "generic"]
+log = logging.getLogger(__name__)
+
+_STREAMS = ["rapidvideo", "streamango", "vidstreaming", "generic"]
 STREAMS: List[Type[Stream]] = []
 
 _DENY_REGISTRATION = False
@@ -27,6 +30,7 @@ def _load_streams():
 
 
 _load_streams()
+log.info(f"Using Streams: {STREAMS}")
 
 
 def get_stream(req: Request) -> Iterator[Stream]:

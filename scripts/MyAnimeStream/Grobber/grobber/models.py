@@ -7,7 +7,7 @@ from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
 from operator import attrgetter
-from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional
+from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional, Union
 
 from .decorators import cached_property
 from .request import Request
@@ -37,6 +37,8 @@ VIDEO_MIME_TYPES = ("video/webm", "video/ogg", "video/mp4", "application/octet-s
 class Stream(Stateful, abc.ABC):
     INCLUDE_CLS = True
     ATTRS = ("links", "poster")
+
+    HOST = None
     PRIORITY = 1
 
     def __repr__(self) -> str:
@@ -46,9 +48,8 @@ class Stream(Stateful, abc.ABC):
         return iter(self.links)
 
     @classmethod
-    @abc.abstractmethod
     def can_handle(cls, req: Request) -> bool:
-        ...
+        return req.yarl.host == cls.HOST
 
     @property
     @abc.abstractmethod
@@ -64,13 +65,20 @@ class Stream(Stateful, abc.ABC):
         return len(self.links) > 0
 
     @staticmethod
-    def get_successful_links(sources: MutableSequence[Request]) -> List[str]:
-        all(thread_pool_map(attrgetter("head_success"), sources))
+    def get_successful_links(sources: Union[Request, MutableSequence[Request]]) -> List[str]:
+        if isinstance(sources, Request):
+            sources = [sources]
+        else:
+            all(thread_pool_map(attrgetter("head_success"), sources))
         urls = []
         for source in sources:
             if source.head_success:
-                content_type = source.head_response.headers["content-type"]
+                content_type = source.head_response.headers.get("content-type")
+                if not content_type:
+                    log.debug(f"No content type for {source}")
+                    continue
                 if content_type.startswith(VIDEO_MIME_TYPES):
+                    log.debug(f"Accepting {source}")
                     urls.append(source.url)
         return urls
 
@@ -163,6 +171,9 @@ class Anime(Stateful, abc.ABC):
                     with suppress(AttributeError):
                         delattr(self, f"_{attr}")
         return super().__getattribute__(name)
+
+    def __bool__(self) -> bool:
+        return True
 
     def __len__(self) -> int:
         return self.episode_count

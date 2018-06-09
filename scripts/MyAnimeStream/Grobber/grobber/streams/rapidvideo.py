@@ -9,10 +9,6 @@ from ..request import Request
 class RapidVideo(Stream):
     HOST = "www.rapidvideo.com"
 
-    @classmethod
-    def can_handle(cls, req: Request) -> bool:
-        return req.yarl.host == cls.HOST
-
     @cached_property
     def poster(self) -> Optional[str]:
         link = self._req.bs.select_one("video#videojs").attrs.get("poster")

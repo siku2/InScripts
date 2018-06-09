@@ -1,9 +1,12 @@
 import importlib
+import logging
 from itertools import chain, zip_longest
 from typing import Dict, Iterator, Optional, Set, Type
 
-from ..proxy import anime_collection
 from ..models import Anime, SearchResult, UID
+from ..proxy import anime_collection
+
+log = logging.getLogger(__name__)
 
 _SOURCES = ["gogoanime", "nineanime"]
 SOURCES: Dict[str, Type[Anime]] = {}
@@ -24,9 +27,12 @@ CACHE: Set[Anime] = set()
 
 
 def save_dirty():
+    num_saved = 0
     for anime in CACHE:
         if anime.dirty:
+            num_saved += 1
             anime_collection.update_one({"_id": anime.uid}, {"$set": anime.state}, upsert=True)
+    log.debug(f"Saved {num_saved} dirty out of {len(CACHE)} cached anime")
     CACHE.clear()
 
 

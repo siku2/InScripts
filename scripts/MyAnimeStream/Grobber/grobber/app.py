@@ -15,6 +15,8 @@ from .templates import templates
 from .users import users
 from .utils import *
 
+log = logging.getLogger(__name__)
+
 app = Flask(__name__)
 sentry_client = raven.Client(release=__info__.__version__)
 Sentry(app, sentry_client)
@@ -35,6 +37,8 @@ app.url_map.converters["UID"] = UIDConverter
 
 app.register_blueprint(templates)
 app.register_blueprint(users)
+
+log.info(f"Grobber version {__info__.__version__} running!")
 
 
 @app.teardown_appcontext

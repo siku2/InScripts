@@ -7,6 +7,10 @@ from requests.exceptions import ConnectionError
 
 from .decorators import cached_property
 
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0"
+}
+
 
 class Request:
     ATTRS = ()
@@ -17,9 +21,10 @@ class Request:
     _text: str
     _bs: BeautifulSoup
 
-    def __init__(self, url: str, params: Any = None):
+    def __init__(self, url: str, params: Any = None, headers: Any = None):
         self._raw_url = url
         self._params = params
+        self._headers = headers
 
     def __hash__(self) -> int:
         return hash(self.url)
@@ -41,6 +46,8 @@ class Request:
         data = {"url": self._raw_url}
         if self._params:
             data["params"] = self._params
+        if self._headers:
+            data["headers"] = self._params
         return data
 
     @classmethod
@@ -48,9 +55,16 @@ class Request:
         inst = cls(state["url"], state.get("params", None))
         return inst
 
+    @property
+    def headers(self):
+        headers = DEFAULT_HEADERS.copy()
+        if self._headers:
+            headers.update(self._headers)
+        return headers
+
     @cached_property
     def url(self) -> str:
-        return requests.Request("GET", self._raw_url, params=self._params).prepare().url
+        return requests.Request("GET", self._raw_url, params=self._params, headers=self.headers).prepare().url
 
     @url.setter
     def url(self, value: str):
@@ -63,7 +77,7 @@ class Request:
 
     @cached_property
     def response(self) -> requests.Response:
-        return requests.get(self.url)
+        return requests.get(self.url, headers=self.headers)
 
     @response.setter
     def response(self, value: requests.Response):
@@ -81,7 +95,7 @@ class Request:
     def head_response(self) -> requests.Response:
         if hasattr(self, "_response"):
             return self.response
-        return requests.head(self.url)
+        return requests.head(self.url, headers=self.headers)
 
     @cached_property
     def head_success(self) -> bool:
