@@ -18,7 +18,7 @@ def get_user_config(username: str) -> Response:
 
 @users.route("/<username>/config", methods=("POST",))
 def set_user_config(username: str) -> Response:
-    update = request.json
+    update = request.get_json()
     if not update:
         return error_response(InvalidRequest("Config missing"))
 
