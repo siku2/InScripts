@@ -22,6 +22,7 @@ def _load_sources():
 
 
 _load_sources()
+log.info(f"Using Sources: {[source for source in SOURCES]}")
 
 CACHE: Set[Anime] = set()
 
