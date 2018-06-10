@@ -1,10 +1,40 @@
+let _animeUidCache;
+
 let animeName;
 let animeUID;
 let animeEpisodes;
 
+
+async function findAnimeUID(name) {
+    if (!_animeUidCache) {
+        _animeUidCache = JSON.parse(localStorage.getItem("AnimeUIDs")) || {};
+    }
+    const dub = await config.dub;
+    const cat = _animeUidCache[dub ? "dub" : "sub"];
+    if (cat) {
+        return cat[name];
+    }
+}
+
+async function setAnimeUID(name, uid) {
+    if (!_animeUidCache) {
+        _animeUidCache = JSON.parse(localStorage.getItem("AnimeUIDs")) || {};
+    }
+    const dub = (await config.dub) ? "dub" : "sub";
+    const cat = _animeUidCache[dub];
+    if (cat) {
+        cat[name] = uid;
+    } else {
+        _animeUidCache[dub] = {[name]: uid};
+    }
+
+    localStorage.setItem("AnimeUIDs", JSON.stringify(_animeUidCache));
+}
+
+
 async function getAnimeInfo() {
     animeName = document.querySelector("h1>span[itemprop=name]").innerText;
-    animeUID = localStorage.getItem(animeName);
+    animeUID = await findAnimeUID(animeName);
 
     if (animeUID) {
         const data = await $.getJSON(grobberUrl + "/anime/" + animeUID);
@@ -28,6 +58,6 @@ async function getAnimeInfo() {
     const data = result.anime[0].anime;
     animeUID = data.uid;
     animeEpisodes = data.episodes;
-    localStorage.setItem(animeName, animeUID);
+    await setAnimeUID(animeName, animeUID);
     return true;
 }

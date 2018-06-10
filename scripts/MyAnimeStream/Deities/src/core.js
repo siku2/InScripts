@@ -2,10 +2,9 @@ let username;
 
 function addUserContext() {
     if (Raven.isSetup()) {
-        const usernameContainer = document.querySelector("a.header-profile-link");
-        if (usernameContainer) {
-            username = usernameContainer.text;
-            console.log("Set user context.");
+        const username = unsafeWindow.MAL.USER_NAME;
+        if (username) {
+            console.log("Set user context for", username);
             Raven.setUserContext({
                 username: username,
                 mobile: isMobilePage()

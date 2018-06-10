@@ -21,7 +21,7 @@ async function updateAnimeStatus(update) {
 }
 
 async function finishedEpisode() {
-    if (!await config.updateEpisodesSeen) {
+    if (!await config.updateAnimeStatus) {
         console.log("Not updating anime status because of user settings");
     }
 

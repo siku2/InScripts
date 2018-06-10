@@ -12,11 +12,11 @@ class AnimeListEntry {
     }
 
     get uid() {
-        return localStorage.getItem(this.name);
+        return findAnimeUID(this.name);
     }
 
     get uidValid() {
-        return this.uid && this._latestEpisode !== undefined;
+        return (async () => await this.uid && this._latestEpisode !== undefined)();
     }
 
     get airing() {
@@ -42,13 +42,13 @@ class AnimeListEntry {
         return this.latestEpisode - this.currentEpisode;
     }
 
-    show() {
+    async show() {
         let text;
         let explanation;
         let onClick;
         const classList = ["content-status", "episode-status"];
 
-        if (this.uidValid) {
+        if (await this.uidValid) {
             if (this.nNewEpisodes > 0) {
                 if (this.airing) {
                     text = (this.nNewEpisodes === 1) ? "new episode!" : "new episodes!";
@@ -60,7 +60,7 @@ class AnimeListEntry {
                 }
             }
         }
-        else if (this.uid) {
+        else if (await this.uid) {
             text = "uid invalid";
             explanation = "There was an UID cached but the server didn't accept it. Just open the anime page and it should fix itself";
         } else {
@@ -105,8 +105,8 @@ async function highlightAnimeWithUnwatchedEpisodes() {
     const watchingList = await getCurrentlyWatchingAnimeList();
     const uids = {};
     for (item of watchingList) {
-        if (item.uid) {
-            uids[item.uid] = item;
+        if (await item.uid) {
+            uids[await item.uid] = item;
         }
     }
     const resp = await postJSON(grobberUrl + "/anime/episode-count", Object.keys(uids));

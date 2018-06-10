@@ -1,7 +1,7 @@
 const default_config = {
     dub: false,
     replaceStream: true,
-    updateEpisodesSeen: true,
+    updateAnimeStatus: true,
     minWatchPercentageForSeen: .75
 };
 
@@ -34,6 +34,7 @@ const config = new Proxy(_config, _configHandler);
 
 
 async function loadConfig() {
+    console.debug("loading config");
     Raven.captureBreadcrumb({
         message: "loading config...",
         level: "info",
