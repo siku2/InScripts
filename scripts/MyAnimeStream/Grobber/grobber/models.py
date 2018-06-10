@@ -10,6 +10,7 @@ from operator import attrgetter
 from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional, Union
 
 from .decorators import cached_property
+from .exceptions import EpisodeNotFound
 from .request import Request
 from .stateful import BsonType, Stateful
 from .utils import thread_pool_map
@@ -266,7 +267,10 @@ class Anime(Stateful, abc.ABC):
             ep = self._episodes.get(index)
             if ep is not None:
                 return ep
-        return self.episodes[index]
+        try:
+            return self.episodes[index]
+        except KeyError:
+            raise EpisodeNotFound(index, self.episode_count)
 
     @abc.abstractmethod
     def get_episodes(self) -> List[EPISODE_CLS]:
