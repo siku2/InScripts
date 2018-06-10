@@ -2,7 +2,7 @@ let username;
 
 function addUserContext() {
     if (Raven.isSetup()) {
-        const username = unsafeWindow.MAL.USER_NAME;
+        username = unsafeWindow.MAL.USER_NAME;
         if (username) {
             console.log("Set user context for", username);
             Raven.setUserContext({

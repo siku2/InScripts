@@ -48,4 +48,6 @@ async function route() {
     } else {
         currentPage = PageEnum.UNKNOWN;
     }
+    
+    changelogCheckVersion();
 }

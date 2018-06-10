@@ -36,3 +36,30 @@ function injectBalloonCSS() {
     const link = "<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/balloon-css/0.5.0/balloon.min.css\">";
     $(link).appendTo("head");
 }
+
+function versionBiggerThan(a, b) {
+    if (a === b) {
+        return null;
+    }
+
+    const a_components = a.split(".");
+    const b_components = b.split(".");
+    const len = Math.min(a_components.length, b_components.length);
+
+    for (let i = 0; i < len; i++) {
+        if (parseInt(a_components[i]) > parseInt(b_components[i])) {
+            return true;
+        }
+        if (parseInt(a_components[i]) < parseInt(b_components[i])) {
+            return false;
+        }
+    }
+
+    if (a_components.length > b_components.length) {
+        return true;
+    }
+
+    if (a_components.length < b_components.length) {
+        return false;
+    }
+}
