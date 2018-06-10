@@ -66,6 +66,7 @@ class Streamango(Stream):
             link = Request(add_http_scheme(source))
             if link.head_success:
                 return [link.url]
+        return []
 
 
 register_stream(Streamango)
