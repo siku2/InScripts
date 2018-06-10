@@ -47,6 +47,12 @@ def teardown_appcontext(error):
     sources.save_dirty()
 
 
+@app.after_request
+def after_request(response: Response) -> Response:
+    response.headers["Grobber-Version"] = __info__.__version__
+    return response
+
+
 @app.route("/search/<query>")
 def search(query: str) -> Response:
     num_results = cast_argument(request.args.get("results"), int, 1)
