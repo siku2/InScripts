@@ -8,7 +8,7 @@ from ..request import Request
 
 log = logging.getLogger(__name__)
 
-_STREAMS = ["rapidvideo", "streamango", "vidstreaming", "generic"]
+_STREAMS = ["rapidvideo", "vidstreaming", "generic"]
 STREAMS: List[Type[Stream]] = []
 
 _DENY_REGISTRATION = False

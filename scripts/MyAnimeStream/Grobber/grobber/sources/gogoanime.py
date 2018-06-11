@@ -59,8 +59,9 @@ class GogoEpisode(Episode):
         streams = []
         links = self._req.bs.select("div.anime_muti_link a")
         for link in links:
-            stream = next(get_stream(Request(add_http_scheme(link["data-video"]))))
-            streams.append(stream)
+            stream = next(get_stream(Request(add_http_scheme(link["data-video"]))), None)
+            if stream:
+                streams.append(stream)
         return streams
 
     @cached_property

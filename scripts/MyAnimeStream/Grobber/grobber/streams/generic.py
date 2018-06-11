@@ -15,12 +15,17 @@ RE_URL_MATCHER = r"\b((http(s)?:)?(//)?[/\w.\-]+\.(" + "{suffix}" + r"))\b"
 RE_VIDEO_LINK_MATCHER = re.compile(RE_URL_MATCHER.format(suffix="mp4|webm|ogg"), re.DOTALL)
 RE_IMAGE_LINK_MATCHER = re.compile(RE_URL_MATCHER.format(suffix="jpg|gif|png"), re.DOTALL)
 
+BLOCKED_HOSTS = ["estream.xyz"]
+
 
 class Generic(Stream):
     PRIORITY = 0
 
     @classmethod
     def can_handle(cls, req: Request) -> bool:
+        if req.yarl.host in BLOCKED_HOSTS:
+            log.debug(f"ignoring {req} because it's blocked")
+            return False
         return True
 
     def get_links(self, pattern: Pattern) -> List[Request]:

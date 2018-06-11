@@ -36,7 +36,10 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
 class NineEpisode(Episode):
     @cached_property
     def streams(self) -> List[Stream]:
-        return [next(get_stream(Request(self.host_url)))]
+        stream = next(get_stream(Request(self.host_url)), None)
+        if stream:
+            return [stream]
+        return []
 
     @cached_property
     def host_url(self) -> str:

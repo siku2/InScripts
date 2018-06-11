@@ -21,6 +21,9 @@ class Version:
         self.minor = minor
         self.patch = patch
 
+    def __len__(self) -> int:
+        return 3
+
     def __iter__(self) -> Iterator[int]:
         return iter((self.major, self.minor, self.patch))
 
@@ -29,12 +32,12 @@ class Version:
 
     @classmethod
     def from_version_num(cls, version_num: int) -> "Version":
-        version = str(version_num).ljust(9, "0")
-        return cls(*map(int, (version[i:i + 3] for i in range(0, 9, 3))))
+        version = [(version_num & (16 ** (4 * i) - 1)) >> ((i - 1) * 16) for i in range(3, 0, -1)]
+        return cls(*version)
 
     @property
     def version_num(self) -> int:
-        return int(f"{self.major:03}{self.minor:03}{self.patch:03}")
+        return sum(part << (len(self) - i) * 16 for i, part in enumerate(self, 1))
 
 
 @templates.route("/changelog/<from_version>/<to_version>")
