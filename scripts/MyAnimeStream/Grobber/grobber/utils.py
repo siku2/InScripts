@@ -1,10 +1,9 @@
-__all__ = ["create_response", "error_response", "cast_argument", "add_http_scheme", "parse_js_json", "thread_pool_map"]
+__all__ = ["create_response", "error_response", "cast_argument", "add_http_scheme", "parse_js_json", "thread_pool"]
 
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from typing import Any, Callable, TypeVar, List
+from typing import Any, Callable, TypeVar
 
 from flask import Response, jsonify
 
@@ -65,4 +64,3 @@ def parse_js_json(text: str):
 
 THREAD_WORKERS = 10
 thread_pool = ThreadPoolExecutor(max_workers=THREAD_WORKERS)
-thread_pool_map = partial(thread_pool.map, chunksize=THREAD_WORKERS)

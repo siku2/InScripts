@@ -1,11 +1,12 @@
 import abc
-import importlib
 import logging
 import re
+import sys
 from collections import namedtuple
 from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
+from itertools import groupby
 from operator import attrgetter
 from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional, Union
 
@@ -13,7 +14,7 @@ from .decorators import cached_property
 from .exceptions import EpisodeNotFound
 from .request import Request
 from .stateful import BsonType, Stateful
-from .utils import thread_pool_map
+from .utils import thread_pool
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class Stream(Stateful, abc.ABC):
         if isinstance(sources, Request):
             sources = [sources]
         else:
-            all(thread_pool_map(attrgetter("head_success"), sources))
+            all(thread_pool.map(attrgetter("head_success"), sources))
         urls = []
         for source in sources:
             if source.head_success:
@@ -117,9 +118,15 @@ class Episode(Stateful, abc.ABC):
     @cached_property
     def stream(self) -> Optional[Stream]:
         log.debug(f"{self} Searching for working stream...")
-        stream = next((stream for stream in self.streams if stream.working), None)
-        log.debug(f"{self} found stream: {stream}")
-        return stream
+        for priority, streams in groupby(self.streams, attrgetter("PRIORITY")):
+            streams = list(streams)
+            log.debug(f"Looking at {len(streams)} stream(s) with priority {priority}")
+            all(thread_pool.map(attrgetter("working"), streams))
+            working_stream = next((stream for stream in streams if stream.working), None)
+            if working_stream:
+                log.debug(f"Found working stream: {working_stream}")
+                return working_stream
+        log.debug(f"No working stream for {self}")
 
     @cached_property
     def poster(self) -> Optional[str]:
@@ -132,7 +139,7 @@ class Episode(Stateful, abc.ABC):
 
     def serialise_special(self, key: str, value: Any) -> BsonType:
         if key == "streams":
-            return [stream.state for stream in value]
+            return [stream.state for stream in value if getattr(stream, "_links", False)]
 
     @classmethod
     def deserialise_special(cls, key: str, value: BsonType) -> Any:
@@ -140,8 +147,10 @@ class Episode(Stateful, abc.ABC):
             streams = []
             for stream in value:
                 m, c = stream["cls"].rsplit(".", 1)
-                stream_cls = getattr(importlib.import_module(m), c)
-                streams.append(stream_cls.from_state(stream))
+                module = sys.modules.get(m)
+                if module:
+                    stream_cls = getattr(module, c)
+                    streams.append(stream_cls.from_state(stream))
             return streams
 
 

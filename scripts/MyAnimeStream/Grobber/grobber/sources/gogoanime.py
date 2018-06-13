@@ -1,6 +1,7 @@
 import logging
 import math
 import re
+from operator import attrgetter
 from typing import Iterator, List, Optional, Tuple
 
 from . import register_source
@@ -62,6 +63,7 @@ class GogoEpisode(Episode):
             stream = next(get_stream(Request(add_http_scheme(link["data-video"]))), None)
             if stream:
                 streams.append(stream)
+        streams.sort(key=attrgetter("PRIORITY"), reverse=True)
         return streams
 
     @cached_property

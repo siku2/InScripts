@@ -16,7 +16,6 @@ RE_EXTRACT_SETUP = re.compile(r"playerInstance\.setup\((.+?)\);", re.DOTALL)
 def extract_player_data(text: str) -> dict:
     match = RE_EXTRACT_SETUP.search(text)
     if not match:
-        log.info("Couldn't extract player data from page... Maybe an embed?")
         return {}
     return parse_js_json(match.group(1))
 

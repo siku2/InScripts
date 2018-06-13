@@ -15,7 +15,7 @@ RE_URL_MATCHER = r"\b((http(s)?:)?(//)?[/\w.\-]+\.(" + "{suffix}" + r"))\b"
 RE_VIDEO_LINK_MATCHER = re.compile(RE_URL_MATCHER.format(suffix="mp4|webm|ogg"), re.DOTALL)
 RE_IMAGE_LINK_MATCHER = re.compile(RE_URL_MATCHER.format(suffix="jpg|gif|png"), re.DOTALL)
 
-BLOCKED_HOSTS = ["estream.xyz"]
+BLOCKED_HOSTS = ["estream.xyz", "estream.to"]
 
 
 class Generic(Stream):
