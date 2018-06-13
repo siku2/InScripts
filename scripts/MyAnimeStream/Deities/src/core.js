@@ -35,7 +35,8 @@ if (ravenDSN) {
         release: GM_info.script.version,
         tags: {
             manager_version: GM_info.version
-        }
+        },
+        ignoreErrors: [/{"isTrusted":(true|false)}/g]
     }).install();
 
     console.info("Using Raven DSN!");
