@@ -50,7 +50,7 @@ async function onVideoEnd() {
     }
 }
 
-async function onPageLeave(event) {
+async function onPageLeave() {
     if (!currentPlayer.ended) {
         const percentage = currentPlayer.currentTime / currentPlayer.duration;
         const minPercentage = await config.minWatchPercentageForSeen;
@@ -58,15 +58,24 @@ async function onPageLeave(event) {
             console.log("Left page with video at " + Math.round(100 * percentage).toString() + "% Counting as finished!");
             await finishedEpisode();
         }
+
+        const url = new URL(window.location.href);
+        url.delete("autoplay");
+        history.pushState(null, null, url.toString());
     }
 }
 
 function setupPlyr() {
     if (document.getElementById("player")) {
         currentPlayer = new Plyr("#player");
+
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("autoplay") === "true") {
+            currentPlayer.play();
+        }
+
         currentPlayer.on("ended", onVideoEnd);
         window.addEventListener("beforeunload", onPageLeave);
-        console.log(currentPlayer);
     } else {
         console.warn("Couldn't find player, assuming this is an embed!");
     }

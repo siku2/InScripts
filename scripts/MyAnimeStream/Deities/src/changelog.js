@@ -6,6 +6,10 @@ async function closeChangelog() {
 
 async function showChangelog(toVersion, fromVersion) {
     const html = await $.get(grobberUrl + "/templates/changelog/" + fromVersion + "/" + toVersion);
+    if (html.success === false) {
+        console.log("no changes to show");
+        return;
+    }
     $.injectCSS({
         ".changelog-popup": {
             position: "fixed",
