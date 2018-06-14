@@ -3,7 +3,6 @@ import logging
 import re
 import sys
 from collections import namedtuple
-from contextlib import suppress
 from datetime import datetime
 from difflib import SequenceMatcher
 from itertools import groupby
@@ -13,7 +12,7 @@ from typing import Any, Dict, Iterator, List, MutableSequence, NewType, Optional
 from .decorators import cached_property
 from .exceptions import EpisodeNotFound
 from .request import Request
-from .stateful import BsonType, Stateful
+from .stateful import BsonType, Expiring, Stateful
 from .utils import thread_pool
 
 log = logging.getLogger(__name__)
@@ -36,9 +35,11 @@ class SearchResult(namedtuple("SearchResult", ("anime", "certainty"))):
 VIDEO_MIME_TYPES = ("video/webm", "video/ogg", "video/mp4", "application/octet-stream")
 
 
-class Stream(Stateful, abc.ABC):
+class Stream(Expiring, abc.ABC):
     INCLUDE_CLS = True
     ATTRS = ("links", "poster")
+    CHANGING_ATTRS = ("links",)
+    EXPIRE_TIME = Expiring.DAY
 
     HOST = None
     PRIORITY = 1
@@ -154,16 +155,15 @@ class Episode(Stateful, abc.ABC):
             return streams
 
 
-class Anime(Stateful, abc.ABC):
+class Anime(Expiring, abc.ABC):
     EPISODE_CLS = Episode
 
     INCLUDE_CLS = True
     ATTRS = ("id", "is_dub", "title", "episode_count", "episodes", "last_update")
     CHANGING_ATTRS = ("episode_count",)
-    UPDATE_INTERVAL = 60 * 30  # 30 mins should be fine, right?
+    EXPIRE_TIME = 30 * Expiring.MINUTE  # 30 mins should be fine, right?
 
     _episodes: Dict[int, EPISODE_CLS]
-    _last_update: datetime
 
     def __init__(self, req: Request):
         super().__init__(req)
@@ -172,15 +172,6 @@ class Anime(Stateful, abc.ABC):
 
     def __getitem__(self, item: int) -> EPISODE_CLS:
         return self.get(item)
-
-    def __getattribute__(self, name: str) -> Any:
-        if name in type(self).CHANGING_ATTRS:
-            if self._update:
-                log.debug(f"{self}: time for an update")
-                for attr in type(self).CHANGING_ATTRS:
-                    with suppress(AttributeError):
-                        delattr(self, f"_{attr}")
-        return super().__getattribute__(name)
 
     def __bool__(self) -> bool:
         return True
@@ -204,14 +195,6 @@ class Anime(Stateful, abc.ABC):
         if hasattr(self, "_uid") or hasattr(self._req, "_response"):
             return hash(self.uid)
         return hash(self._req)
-
-    @property
-    def _update(self) -> bool:
-        current_time = datetime.now()
-        if (current_time - self._last_update).total_seconds() > self.UPDATE_INTERVAL:
-            self._last_update = current_time
-            return True
-        return False
 
     @property
     def dirty(self) -> bool:

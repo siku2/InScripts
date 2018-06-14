@@ -42,6 +42,7 @@ class Vidstreaming(Stream):
         if not raw_sources:
             return []
         sources = [Request(source["file"]) for source in raw_sources]
+        log.debug(f"found sources {sources}")
         return Stream.get_successful_links(sources)
 
 

@@ -1,11 +1,14 @@
 from typing import Any
 
 import requests
+import urllib3
 import yarl
 from bs4 import BeautifulSoup
 from requests.exceptions import ConnectionError
 
 from .decorators import cached_property
+
+urllib3.disable_warnings()
 
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0"
@@ -77,7 +80,7 @@ class Request:
 
     @cached_property
     def response(self) -> requests.Response:
-        return requests.get(self.url, headers=self.headers)
+        return requests.get(self.url, headers=self.headers, verify=False)
 
     @response.setter
     def response(self, value: requests.Response):
@@ -95,7 +98,7 @@ class Request:
     def head_response(self) -> requests.Response:
         if hasattr(self, "_response"):
             return self.response
-        return requests.head(self.url, headers=self.headers)
+        return requests.head(self.url, headers=self.headers, verify=False)
 
     @cached_property
     def head_success(self) -> bool:

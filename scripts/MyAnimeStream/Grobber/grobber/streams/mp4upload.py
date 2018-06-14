@@ -1,7 +1,7 @@
-import json
 import logging
 import re
-from typing import Any, Dict, List, Match, Optional, Pattern
+from collections import namedtuple
+from typing import List, Match, Optional, Pattern
 
 from . import register_stream
 from ..decorators import cached_property
@@ -13,8 +13,7 @@ log = logging.getLogger(__name__)
 RE_EXTRACT_CODE: Pattern = re.compile(
     r"<div id=\"player\"><script type='text/javascript'>eval\(function\(p,a,c,k,e,d\){.+?}\('(.+?)',(\d+),\d+,'([\w|]+)'", re.DOTALL
 )
-RE_EXTRACT_SETUP: Pattern = re.compile(r"player\.setup\(({.+?})\);", re.DOTALL)
-RE_JSON_FIXER: Pattern = re.compile(r"(\"\w+\":)\s*,")
+RE_EXTRACT_DATA: Pattern = re.compile(r"\"file\":\s*\"(.+)\",\s*\"image\":\s*\"(.+)\",", re.DOTALL)
 
 
 def baseN(num, b, numerals="0123456789abcdefghijklmnopqrstuvwxyz"):
@@ -22,23 +21,25 @@ def baseN(num, b, numerals="0123456789abcdefghijklmnopqrstuvwxyz"):
 
 
 def decode(code: str, radix: int, encoding_map: List[str]) -> str:
-    for i in range(len(encoding_map) - 1, 0, -1):
-        code = re.sub(r"\b" + baseN(i, radix) + r"\b", encoding_map[i], code)
+    for i in range(len(encoding_map) - 1, -1, -1):
+        if encoding_map[i]:
+            code = re.sub(r"\b" + baseN(i, radix) + r"\b", encoding_map[i], code)
     return code
 
 
-def extract_player_data(text: str) -> Optional[Dict[str, Any]]:
+PlayerData = namedtuple("PlayerData", ("video", "poster"))
+
+
+def extract_player_data(text: str) -> Optional[PlayerData]:
     match: Match = RE_EXTRACT_CODE.search(text)
     if match:
         code, radix, encoding_map = match.groups()
         text = decode(code, int(radix), encoding_map.split("|"))
-        match: Match = RE_EXTRACT_SETUP.search(text)
+        match: Match = RE_EXTRACT_DATA.search(text)
         if match:
-            json_data = match.group(1).replace("\'", "\"")
-            json_data = RE_JSON_FIXER.sub(r"\1null,", json_data)
-            return json.loads(json_data)
+            return PlayerData(*match.groups())
         else:
-            log.debug("Mp4Upload Couldn't find player setup in decrypted code")
+            log.debug("Mp4Upload Couldn't extract file and image from decrypted code")
     else:
         log.debug("Mp4Upload Couldn't extract encrypted code from page")
 
@@ -46,26 +47,26 @@ def extract_player_data(text: str) -> Optional[Dict[str, Any]]:
 class Mp4Upload(Stream):
     ATTRS = ("player_data",)
 
-    HOST = "mp4upload.com"
+    HOST = "www.mp4upload.com"
 
     @cached_property
-    def player_data(self) -> Dict[str, Any]:
+    def player_data(self) -> PlayerData:
         player_data = extract_player_data(self._req.text)
         if player_data:
             return player_data
         else:
             log.debug("Mp4Upload unable to extract player data")
-            return {}
+            return PlayerData(None, None)
 
     @cached_property
     def poster(self) -> Optional[str]:
-        link = self.player_data.get("image")
+        link = self.player_data[1]
         if link and Request(link).head_success:
             return link
 
     @cached_property
     def links(self) -> List[str]:
-        source = self.player_data.get("file")
+        source = self.player_data[0]
         if source and Request(source).head_success:
             return [source]
         return []

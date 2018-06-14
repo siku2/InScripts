@@ -1,11 +1,15 @@
 import abc
+import logging
 import re
+from contextlib import suppress
 from datetime import datetime
 from typing import Any, Dict, TypeVar
 
 import bson
 
 from .request import Request
+
+log = logging.getLogger(__name__)
 
 VALID_BSON_TYPES = (dict, list, tuple, bson.ObjectId, datetime, re._pattern_type, str, int, float, bool, bytes, type(None))
 BsonType = TypeVar("JsonType", *VALID_BSON_TYPES)
@@ -80,3 +84,38 @@ class Stateful(abc.ABC):
                 value = cls.deserialise_special(key, value)
             setattr(inst, "_" + key, value)
         return inst
+
+
+class Expiring(Stateful):
+    MINUTE = 60
+    HOUR = MINUTE * 60
+    DAY = HOUR * 24
+
+    CHANGING_ATTRS = ()
+    EXPIRE_TIME = HOUR
+
+    ATTRS = ("last_update",)
+    _last_update: datetime
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.CHANGING_ATTRS = set(attr for base in type(self).__mro__ for attr in getattr(base, "CHANGING_ATTRS", []))
+        self._last_update = datetime.now()
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in type(self).CHANGING_ATTRS:
+            if self._update:
+                log.debug(f"{self}: time for an update")
+                for attr in type(self).CHANGING_ATTRS:
+                    with suppress(AttributeError):
+                        delattr(self, f"_{attr}")
+        return super().__getattribute__(name)
+
+    @property
+    def _update(self) -> bool:
+        current_time = datetime.now()
+        last_time = self._last_update
+        if (current_time - last_time).total_seconds() > self.EXPIRE_TIME:
+            self._last_update = current_time
+            return True
+        return False
