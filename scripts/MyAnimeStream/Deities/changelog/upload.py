@@ -1,12 +1,20 @@
 import re
-from typing import List, Pattern
+from collections import namedtuple
+from datetime import datetime
+from typing import Any, List, Pattern
 
-RE_VERSION_EXTRACTOR: Pattern = re.compile(r"(\d+)[-.](\d+)[-.](\d+)")
-RE_PARSER: Pattern = re.compile(r"^[ \t]*(?<!//)[ \t]*(\w+)(?:\[(\d+)\])?:\s*([\>\|])?\s*(.+?);$", re.S | re.M)
+from dateutil.parser import parser as parse_date
+
+RE_HEADER_PARSER: Pattern = re.compile(r"^[ \t]*(\w+)\s*:[ \t]*([>|])?\s*(.+?);$", re.S | re.M)
+RE_PARSER: Pattern = re.compile(r"^[ \t]*(?<!//)[ \t]*(\w+)(?:\[(\d+)\])?:\s*([>|])?\s*(.+?);$", re.S | re.M)
 RE_NEWLINE_STRIPPER: Pattern = re.compile(r"\s+")
 
+FILE_SPLITTER = "---"
 
-def parse(text: str) -> List[dict]:
+ChangelogHeader = namedtuple("ChangelogHeader", ("version", "release"))
+
+
+def parse_logs(text: str) -> List[dict]:
     changes = []
     for match in RE_PARSER.finditer(text):
         change_type, priority, text_style, text = match.groups(None)
@@ -33,30 +41,73 @@ def parse(text: str) -> List[dict]:
     return changes
 
 
+def parse_header(text: str) -> ChangelogHeader:
+    headers = {}
+    for match in RE_HEADER_PARSER.finditer(text):
+        key, text_style, value = match.groups(None)
+        if text_style:
+            if text_style == "|":
+                value = value.strip()
+            elif text_style == ">":
+                value = RE_NEWLINE_STRIPPER.sub(" ", value)
+            else:
+                raise SyntaxError(f"Unknown text style (text_style)") from None
+        headers[key] = value
+
+    version = headers["version"]
+    version = tuple(map(int, version.split(".")))
+
+    release = headers.get("release")
+    if release:
+        release = parse_date(release)
+    else:
+        print("No release specified, using NOW")
+        release = datetime.now()
+
+    return ChangelogHeader(version, release)
+
+
+def parse_changelog(text: str) -> dict:
+    header, changes = text.split(FILE_SPLITTER, 1)
+    header = parse_header(header)
+    changes = parse_logs(changes)
+
+    version_num = sum(part << (len(header.version) - i) * 16 for i, part in enumerate(header.version, 1))
+
+    return {
+        "version_num": version_num,
+        "release": header.release,
+        "changes": changes
+    }
+
+
 if __name__ == "__main__":
-    import json
-    import sys
     from argparse import ArgumentParser
-    from pathlib import Path
-    from datetime import datetime
 
     parser = ArgumentParser("Changelogger", description="A tool to make changelogs easy or something like that")
     parser.add_argument("file", type=open, help="The file you'd like to parse")
-    # parser.add_argument("mongo_uri", help="MongoDB uri to connect to")
+    parser.add_argument("-o", "--output", help="output", default="json")
 
     args = parser.parse_args()
-    filename = Path(args.file.name).stem
-    match = RE_VERSION_EXTRACTOR.match(filename)
-    if match:
-        major, minor, patch = map(int, match.groups())
-        version_num = (major << 32) + (minor << 16) + patch
-    else:
-        version_num = None
-        print("Couldn't extract version", file=sys.stderr)
-    changes = parse(args.file.read())
-    changelog = {
-        "changes": changes,
-        "version_num": version_num,
-        "release": datetime.now().isoformat()
-    }
-    print(json.dumps(changelog, indent=4))
+    changelog = parse_changelog(args.file.read())
+
+    if args.output == "json":
+        import json
+        from json import JSONEncoder
+
+
+        class ConsoleEncoder(JSONEncoder):
+            def default(self, o: Any) -> Any:
+                if isinstance(o, datetime):
+                    return o.isoformat()
+                return super().default(o)
+
+
+        print(json.dumps(changelog, cls=ConsoleEncoder, indent=4))
+    elif args.output.startswith("mongodb://"):
+        from pymongo import MongoClient
+
+        client = MongoClient(args.output)
+        database = client.myanimestream
+        database.changelog.update_one({"version_num": changelog["version_num"]}, {"$set": changelog}, upsert=True)
+        print("Uploaded changelog to MongoDb")
