@@ -21,18 +21,24 @@ def extract_player_data(text: str) -> dict:
 
 
 class Vidstreaming(Stream):
+    ATTRS = ("player_data",)
+
     HOST = "vidstreaming.io"
 
     @cached_property
+    def player_data(self) -> dict:
+        return extract_player_data(self._req.text)
+
+    @cached_property
     def poster(self) -> Optional[str]:
-        link = extract_player_data(self._req.text).get("image")
+        link = self.player_data.get("image")
         if link and Request(link).head_success:
             return link
         return None
 
     @cached_property
     def links(self) -> List[str]:
-        raw_sources = extract_player_data(self._req.text).get("sources")
+        raw_sources = self.player_data.get("sources")
         if not raw_sources:
             return []
         sources = [Request(source["file"]) for source in raw_sources]
