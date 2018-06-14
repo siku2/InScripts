@@ -1,4 +1,5 @@
-version: 1.2.0
+version: 1.1.1
 ---
 added: Stream links expire after a certain time thus broken streams should fix themselves after a while;
-fixed: Mp4Upload was broken
+fixed: Improved UID caching;
+fixed: Mp4Upload no longer broken;

@@ -17,10 +17,8 @@ async function findAnimeUID(name) {
 }
 
 async function setAnimeUID(name, uid) {
-    if (!_animeUidCache) {
-        _animeUidCache = JSON.parse(localStorage.getItem("AnimeUIDs")) || {};
-    }
     const dub = (await config.dub) ? "dub" : "sub";
+    _animeUidCache = JSON.parse(localStorage.getItem("AnimeUIDs")) || {};
     const cat = _animeUidCache[dub];
     if (cat) {
         cat[name] = uid;
