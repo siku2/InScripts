@@ -12,7 +12,12 @@ class AnimeListEntry {
     }
 
     get uid() {
-        return findAnimeUID(this.name);
+        return (async () => {
+            if (!this._uid) {
+                this._uid = await findAnimeUID(this.name);
+            }
+            return this._uid;
+        })();
     }
 
     get uidValid() {
@@ -100,9 +105,43 @@ async function getCurrentlyWatchingAnimeList() {
     return watchingList;
 }
 
+function displayCachedAnimeList(list) {
+    const cachedList = JSON.parse(localStorage.getItem("cachedAnimeList"));
+    if (!cachedList) {
+        console.debug("No Anime List cached");
+        return;
+    }
+    for (const anime of list) {
+        const cachedAnime = cachedList[anime.name];
+        if (cachedAnime) {
+            anime._uid = cachedAnime.uid;
+            anime._latestEpisode = cachedAnime.latestEpisode;
+            anime.show();
+        }
+    }
+}
+
+function cacheAnimeList(list) {
+    const cachedList = {};
+    for (const anime of list) {
+        cachedList[anime.name] = {uid: anime._uid, latestEpisode: anime._latestEpisode};
+    }
+    localStorage.setItem("cachedAnimeList", JSON.stringify(cachedList));
+}
+
 async function highlightAnimeWithUnwatchedEpisodes() {
     injectBalloonCSS();
+    $.injectCSS({
+        "span.episode-status.new-episode": {
+            "font-weight": "bolder",
+            color: "#787878" + " !important"
+        }
+    });
+    
     const watchingList = await getCurrentlyWatchingAnimeList();
+
+    displayCachedAnimeList(watchingList);
+
     const uids = {};
     for (item of watchingList) {
         if (await item.uid) {
@@ -118,10 +157,5 @@ async function highlightAnimeWithUnwatchedEpisodes() {
     Object.entries(resp.anime).forEach(([uid, epCount]) => uids[uid].latestEpisode = epCount);
     watchingList.forEach(anime => anime.show());
 
-    $.injectCSS({
-        "span.episode-status.new-episode": {
-            "font-weight": "bolder",
-            color: "#787878" + " !important"
-        }
-    });
+    cacheAnimeList(watchingList);
 }
