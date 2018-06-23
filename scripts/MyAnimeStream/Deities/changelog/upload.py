@@ -3,7 +3,7 @@ from collections import namedtuple
 from datetime import datetime
 from typing import Any, List, Pattern
 
-from dateutil.parser import parser as parse_date
+from dateutil.parser import parser as date_parser
 
 RE_HEADER_PARSER: Pattern = re.compile(r"^[ \t]*(\w+)\s*:[ \t]*([>|])?\s*(.+?);$", re.S | re.M)
 RE_PARSER: Pattern = re.compile(r"^[ \t]*(?<!//)[ \t]*(\w+)(?:\[(\d+)\])?:\s*([>|])?\s*(.+?);$", re.S | re.M)
@@ -59,7 +59,7 @@ def parse_header(text: str) -> ChangelogHeader:
 
     release = headers.get("release")
     if release:
-        release = parse_date(release)
+        release = date_parser().parse(release)
     else:
         print("No release specified, using NOW")
         release = datetime.now()
