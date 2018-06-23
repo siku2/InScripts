@@ -4,3 +4,4 @@ added: Stream links expire after a certain time thus broken streams should fix t
 added: AnimeList details are now cached so they load quicker;
 fixed: Improved UID caching;
 fixed: Mp4Upload no longer broken;
+fixed[2]: 9Anime animes work again

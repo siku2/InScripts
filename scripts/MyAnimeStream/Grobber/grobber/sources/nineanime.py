@@ -10,7 +10,7 @@ from ..streams import get_stream
 BASE_URL = "https://9anime.is"
 SEARCH_URL = BASE_URL + "/search"
 ANIME_URL = BASE_URL + "/watch/{name}"
-EPISODE_URL = "http://9animes.co" + "/ajax/episode/info"  # TODO: try to figure out encryption!
+EPISODE_URL = BASE_URL + "/ajax/episode/info"  # TODO: try to figure out encryption!
 
 RE_SPACE = re.compile(r"\s+")
 RE_SPECIAL = re.compile(r"[^\w\-]+")
@@ -33,6 +33,29 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
         yield Request(link), similarity
 
 
+def generate_underscore_param(id: str, ts: str, server: str) -> int:
+    def __s(t: list) -> int:
+        i = 0
+        for (e, c) in enumerate(t):
+            i += ord(c) + e
+        return i
+
+    def __a(t: list, e: list) -> str:
+        n = 0
+        for i in range(max(len(t), len(e))):
+            n *= ord(e[i]) if i < len(e) else 8
+            n *= ord(t[i]) if i < len(t) else 8
+        return format(n, "x")  # convert n to hex string
+
+    DD = "bfcad671"  # "cea7cb61" #"49220519" #"a29856fa"
+    params = [("id", id), ("ts", ts), ("server", server)]
+    o = __s(DD)
+
+    for i in params:
+        o += __s(__a(DD + i[0], i[1]))
+    return o
+
+
 class NineEpisode(Episode):
     @cached_property
     def streams(self) -> List[Stream]:
@@ -47,6 +70,7 @@ class NineEpisode(Episode):
 
 
 class NineAnime(Anime):
+    ATTRS = ("anime_id", "server_id")
     EPISODE_CLS = NineEpisode
 
     @cached_property
@@ -55,7 +79,7 @@ class NineAnime(Anime):
 
     @cached_property
     def server_id(self) -> str:
-        return self._req.bs.select_one("span.tab.active")["data-name"]
+        return self._req.bs.select_one("div.servers span.tab.active")["data-name"]
 
     @cached_property
     def raw_title(self) -> str:
@@ -87,7 +111,9 @@ class NineAnime(Anime):
         episodes = []
         for ep in eps:
             ep_id = ep.a["data-id"]
-            params = {"ts": self.anime_id, "id": ep_id}
+            params = {"ts": self.anime_id, "id": ep_id, "server": self.server_id}
+            underscore_param = generate_underscore_param(**params)
+            params["_"] = underscore_param
             req = Request(EPISODE_URL, params)
             episodes.append(self.EPISODE_CLS(req))
         return episodes
