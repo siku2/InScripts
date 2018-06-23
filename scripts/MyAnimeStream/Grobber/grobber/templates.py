@@ -92,7 +92,8 @@ def mal_episode_list(uid: UID) -> Response:
     anime = sources.get_anime(uid)
     if not anime:
         return error_response(UIDUnknown(uid))
-    return render_template("mal/episode_list.html", episode_count=anime.episode_count)
+    offset = cast_argument(request.args.get("offset"), int, 0)
+    return render_template("mal/episode_list.html", episode_count=anime.episode_count, offset=offset)
 
 
 @templates.route("/mal/episode/<UID:uid>/<int:index>")

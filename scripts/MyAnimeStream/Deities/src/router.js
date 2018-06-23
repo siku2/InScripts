@@ -35,7 +35,7 @@ async function route() {
         showAnimeDetails();
     } else if (path.match(/^\/anime\/\d+\/[\w-]+\/episode\/?$/)) {
         currentPage = PageEnum.EPISODES;
-        showAnimeEpsiodes();
+        showAnimeEpisodes();
     } else if (path.match(/^\/anime\/\d+\/[\w-]+\/episode\/\d+\/?$/)) {
         currentPage = PageEnum.EPISODE;
         showAnimeEpisode();

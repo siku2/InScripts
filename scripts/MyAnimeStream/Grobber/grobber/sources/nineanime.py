@@ -34,25 +34,25 @@ def search_anime_page(name: str, dub: bool = False) -> Iterator[Tuple[Request, f
 
 
 def generate_underscore_param(id: str, ts: str, server: str) -> int:
-    def __s(t: list) -> int:
+    def __s(t: str) -> int:
         i = 0
-        for (e, c) in enumerate(t):
+        for e, c in enumerate(t):
             i += ord(c) + e
         return i
 
-    def __a(t: list, e: list) -> str:
+    def __a(t: str, e: str) -> str:
         n = 0
         for i in range(max(len(t), len(e))):
             n *= ord(e[i]) if i < len(e) else 8
             n *= ord(t[i]) if i < len(t) else 8
         return format(n, "x")  # convert n to hex string
 
-    DD = "bfcad671"  # "cea7cb61" #"49220519" #"a29856fa"
+    starting_value = "bfcad671"  # "cea7cb61" #"49220519" #"a29856fa"
     params = [("id", id), ("ts", ts), ("server", server)]
-    o = __s(DD)
+    o = __s(starting_value)
 
     for i in params:
-        o += __s(__a(DD + i[0], i[1]))
+        o += __s(__a(starting_value + i[0], i[1]))
     return o
 
 

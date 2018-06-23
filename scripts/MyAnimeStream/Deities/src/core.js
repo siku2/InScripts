@@ -1,3 +1,4 @@
+let currentURL;
 let username;
 
 function addUserContext() {
@@ -17,6 +18,7 @@ function addUserContext() {
 
 
 function init() {
+    currentURL = new URL(window.location.href);
     setupPlatform();
 
     observe();

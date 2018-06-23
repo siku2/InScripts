@@ -2,6 +2,7 @@ version: 1.1.1
 ---
 added: Stream links expire after a certain time thus broken streams should fix themselves after a while;
 added: AnimeList details are now cached so they load quicker;
+added: Pagination for episode lists
 fixed: Improved UID caching;
 fixed: Mp4Upload no longer broken;
 fixed[2]: 9Anime animes work again
