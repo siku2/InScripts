@@ -5,4 +5,5 @@ added: AnimeList details are now cached so they load quicker;
 added: Pagination for episode lists
 fixed: Improved UID caching;
 fixed: Mp4Upload no longer broken;
-fixed[2]: 9Anime animes work again
+fixed[2]: 9Anime anime work again
+fixed: Detecting Unicode BOM

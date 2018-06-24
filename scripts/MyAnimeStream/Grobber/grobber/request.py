@@ -109,6 +109,7 @@ class Request:
 
     @cached_property
     def text(self) -> str:
+        self.response.encoding = "utf-8-sig"
         return self.response.text
 
     @text.setter
