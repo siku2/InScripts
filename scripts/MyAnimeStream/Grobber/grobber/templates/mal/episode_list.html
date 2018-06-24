@@ -39,7 +39,7 @@
     <div class="mt12 mb12">
         <div class="pagination ac">
             {% if offset > 200 %}
-                <a class="link" href="?offset=0">1 - 100</a>
+                <a class="link {{ "current" if offset == 0 }}" href="?offset=0">1 - 100</a>
                 <span class="skip">&lt;</span>
             {% endif %}
             {% for off in range([offset - 200, 0]|max, [offset + 300, episode_count]|min, 100) %}
@@ -48,8 +48,11 @@
                 </a>
             {% endfor %}
             {% if (episode_count - offset) > 300 %}
+                {% set target_offset = 100 * ((episode_count - 1) // 100) %}
                 <span class="skip">&gt;</span>
-                <a class="link" href="?offset={{ 100 * ((episode_count - 1) // 100) }}">{{ 100 * ((episode_count - 1) // 100) }} - {{ episode_count }}</a>
+                <a class="link {{ "current" if offset == target_offset }}" href="?offset={{ target_offset }}">
+                    {{ target_offset }} - {{ episode_count }}
+                </a>
             {% endif %}
         </div>
     </div>

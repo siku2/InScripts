@@ -1,20 +1,51 @@
-function fixEpisodePagination() {
+function fixEpisodePagination(offset) {
     const paginationEl = document.querySelector("div.pagination");
     if (paginationEl) {
-        // ensure correct details on pagination
-    } else {
-        // add pagination element
-        console.log("there's no pagination")
+        console.log("removing existing pagination");
+        paginationEl.parentElement.remove();
     }
+    if (animeEpisodes <= 100) {
+        console.log("no pagination needed");
+        return;
+    }
+    console.log("building pagination");
+    const paginationContainer = $("<div></div>").addClass("pagination ac");
+    if (offset > 200) {
+        const spanClass = (offset === 0) ? "link current" : "link";
+        paginationContainer.append(
+            "<a class=\"" + spanClass + "\" href=\"?offset=0\">1 - 100</a><span class=\"skip\">&lt;</span>"
+        );
+    }
+
+    for (let off = Math.max(offset - 200, 0); off < Math.min(offset + 300, animeEpisodes); off += 100) {
+        const aClass = (offset === off) ? "link current" : "link";
+        paginationContainer.append(
+            "<a class=\"" + aClass + "\" href=\"?offset=" + off + "\">" + (off + 1).toString() + " - " + Math.min(off + 100, animeEpisodes).toString() + "</a>"
+        );
+    }
+
+    if (animeEpisodes - offset > 300) {
+        const tOff = 100 * Math.floor((animeEpisodes - 1) / 100);
+        const spanClass = (offset === tOff) ? "link current" : "link";
+        paginationContainer.append(
+            "<span class=\"skip\">&gt;</span><a class=\"" + spanClass + "\" href=\"?offset=" + tOff + "\">" + tOff.toString() + " - " + animeEpisodes.toString() + "</a>"
+        );
+    }
+
+    $("<div class=\"mt12 mb12\"></div>")
+        .append(paginationContainer)
+        .insertAfter("div.js-scrollfix-bottom-rel>div>table");
 }
 
 async function showAnimeEpisodes() {
-    let episodeTable = document.querySelector("table.episode_list");
+    const episodeTable = document.querySelector("table.episode_list");
+    const currentEpisodeOffset = parseInt(currentURL.searchParams.get("offset")) || 0;
 
     if (episodeTable) {
         console.log("Manipulating existing episode table...");
         const episodeCount = episodeTable.querySelectorAll("tr.episode-list-data").length;
         const lastEpisodeIndex = parseInt(episodeTable.querySelector("tr.episode-list-data:last-child td.episode-number").innerText);
+
         if (episodeCount === 100) {
             console.log("episode table paginated...");
         } else {
@@ -49,10 +80,10 @@ async function showAnimeEpisodes() {
                 console.log("They've done their job, this table is complete");
             }
         }
-        fixEpisodePagination();
+        fixEpisodePagination(currentEpisodeOffset);
     } else {
         console.log("Creating episode table...");
-        document.querySelector("div.mb4").outerHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID, {offset: currentURL.searchParams.get("offset") || 0});
+        document.querySelector("div.mb4").outerHTML = await $.get(grobberUrl + "/templates/mal/episode/" + animeUID, {offset: currentEpisodeOffset});
     }
 
     const episodeCountDisplay = document.querySelector("h2>span.di-ib");
