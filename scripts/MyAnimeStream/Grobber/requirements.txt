@@ -1,9 +1,0 @@
-beautifulsoup4
-flask
-lxml
-mistune
-pymongo
-raven[flask]
-requests
-werkzeug
-yarl
