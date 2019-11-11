@@ -1,0 +1,10 @@
+// ==UserScript==
+// @name         StreamLord
+// @version      0.1
+// @description  Turn StreamLord into a good experience.
+// @author       siku2
+// @match        *://*.streamlord.com/*
+// @grant        none
+// @run-at       document-end
+// @require      https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.min.js
+// ==/UserScript==

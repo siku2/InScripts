@@ -1,1 +1,0 @@
-## Moved to its [own repository](https://github.com/siku2/MyAnimeStream/raw/master/Deities/dist/myanimestream.user.js)
