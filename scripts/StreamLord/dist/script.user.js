@@ -2,12 +2,14 @@
 // ==UserScript==
 // @name         StreamLord
 // @version      0.1
-// @description  Turn StreamLord into a good experience.
 // @author       siku2
+// @description  Turn StreamLord into a passable experience.
+// @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
+// @updateURL    https://github.com/siku2/InScripts/raw/master/scripts/StreamLord/dist/script.user.js
+// @downloadURL  https://github.com/siku2/InScripts/raw/master/scripts/StreamLord/dist/script.user.js
 // @match        *://*.streamlord.com/*
 // @grant        none
 // @run-at       document-end
-// @require      https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.min.js
 // ==/UserScript==
 (function () {
     'use strict';
@@ -50,7 +52,6 @@
         const raw = JSON.stringify(info.allEpisodes);
         sessionStorage.setItem(key, raw);
     }
-    //# sourceMappingURL=series.js.map
 
     function getDirectText(el) {
         return Array.from(el.childNodes)
@@ -110,7 +111,6 @@
             }
         }
     }
-    //# sourceMappingURL=overview.js.map
 
     function getOverviewLink() {
         var _a, _b;
@@ -198,6 +198,5 @@
             break;
         }
     }
-    //# sourceMappingURL=main.js.map
 
 }());
