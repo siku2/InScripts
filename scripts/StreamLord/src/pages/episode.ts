@@ -56,7 +56,10 @@ export class EpisodePage implements Page {
     }
 
     createVideo() {
-        (document.querySelector("#parall") as HTMLDivElement | null)?.click();
+        const sliderStyle = (document.querySelector("#slider") as HTMLElement | null)?.style;
+        if (!sliderStyle) return;
+
+        sliderStyle.visibility = "hidden";
     }
 
     stylise() {

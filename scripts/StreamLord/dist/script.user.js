@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.1
+// @version      0.1.1
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -164,7 +164,10 @@
         }
         createVideo() {
             var _a;
-            (_a = document.querySelector("#parall")) === null || _a === void 0 ? void 0 : _a.click();
+            const sliderStyle = (_a = document.querySelector("#slider")) === null || _a === void 0 ? void 0 : _a.style;
+            if (!sliderStyle)
+                return;
+            sliderStyle.visibility = "hidden";
         }
         stylise() {
             var _a, _b, _c, _d, _e, _f;
