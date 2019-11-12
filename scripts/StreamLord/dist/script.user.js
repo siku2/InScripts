@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.1.1
+// @version      0.2.0
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -52,7 +52,6 @@
         const raw = JSON.stringify(info.allEpisodes);
         sessionStorage.setItem(key, raw);
     }
-    //# sourceMappingURL=series.js.map
 
     function getDirectText(el) {
         return Array.from(el.childNodes)
@@ -112,7 +111,6 @@
             }
         }
     }
-    //# sourceMappingURL=overview.js.map
 
     function replaceClass(cl, c1, c2) {
         if (!cl)
@@ -125,7 +123,6 @@
         el.innerHTML = css;
         document.body.append(el);
     }
-    //# sourceMappingURL=utils.js.map
 
     function getOverviewLink() {
         var _a, _b;
@@ -254,7 +251,6 @@ header #logo h1 img { max-width: 100px !important; }
             this.styliseHeader();
         }
     }
-    //# sourceMappingURL=common.js.map
 
     const pages = [
         new CommonPage(),
@@ -267,6 +263,5 @@ header #logo h1 img { max-width: 100px !important; }
             page.onVisit();
         }
     }
-    //# sourceMappingURL=main.js.map
 
 }());
