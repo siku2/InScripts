@@ -52,6 +52,7 @@
         const raw = JSON.stringify(info.allEpisodes);
         sessionStorage.setItem(key, raw);
     }
+    //# sourceMappingURL=series.js.map
 
     function getDirectText(el) {
         return Array.from(el.childNodes)
@@ -111,6 +112,20 @@
             }
         }
     }
+    //# sourceMappingURL=overview.js.map
+
+    function replaceClass(cl, c1, c2) {
+        if (!cl)
+            return;
+        cl.remove(c1);
+        cl.add(c2);
+    }
+    function injectStyle(css) {
+        const el = document.createElement("style");
+        el.innerHTML = css;
+        document.body.append(el);
+    }
+    //# sourceMappingURL=utils.js.map
 
     function getOverviewLink() {
         var _a, _b;
@@ -118,12 +133,6 @@
         if (!href)
             throw new Error("episode list link not found");
         return href;
-    }
-    function replaceClass(cl, c1, c2) {
-        if (!cl)
-            return;
-        cl.remove(c1);
-        cl.add(c2);
     }
     const URL_MATCH$1 = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
     class EpisodePage {
@@ -170,15 +179,17 @@
             sliderStyle.visibility = "hidden";
         }
         stylise() {
-            var _a, _b, _c, _d, _e, _f;
-            (_a = document.querySelector("#comment-wrapper")) === null || _a === void 0 ? void 0 : _a.remove();
-            (_b = document.querySelector("#download-button")) === null || _b === void 0 ? void 0 : _b.remove();
-            replaceClass((_c = document.querySelector("#logo")) === null || _c === void 0 ? void 0 : _c.classList, "span_2", "span_8");
-            replaceClass((_d = document.querySelector("#menu")) === null || _d === void 0 ? void 0 : _d.classList, "span_7", "span_4");
-            document.querySelectorAll(".main-menu > li:not([id])")
-                .forEach(el => el.remove());
-            (_e = document.querySelector("#account-settings")) === null || _e === void 0 ? void 0 : _e.remove();
-            (_f = document.querySelector("#search-outer")) === null || _f === void 0 ? void 0 : _f.remove();
+            var _a, _b, _c, _d;
+            (_a = document.querySelector(".watch-info-background")) === null || _a === void 0 ? void 0 : _a.remove();
+            (_b = document.querySelector("#slider.parallax")) === null || _b === void 0 ? void 0 : _b.remove();
+            const el = document.querySelector("#slider.videostream");
+            if (el) {
+                el.removeAttribute("id");
+                el.classList.remove("slider");
+            }
+            (_c = document.querySelector("#comment-wrapper")) === null || _c === void 0 ? void 0 : _c.remove();
+            (_d = document.querySelector("#download-button")) === null || _d === void 0 ? void 0 : _d.remove();
+            injectStyle(CUSTOM_CSS);
         }
         onVisit() {
             this.createVideo();
@@ -189,8 +200,64 @@
             this.patchNextEpisodeButton(key);
         }
     }
+    const CUSTOM_CSS = `
+.movie-summary { transition: filter 1s; }
+
+.movie-summary:not(:hover) { filter: blur(1.5px) opacity(60%); }
+
+form.settings-button { visibility: hidden; }
+
+p.search-rating { display: flex; }
+
+p.search-rating::before { content: none !important; }
+
+p.search-rating::after { content: "/10"; }
+
+.watch #slider.videostream { top: unset; }
+
+.header-content {
+    align-items: center;
+    display: flex;
+    margin: 1% 0;
+}
+
+#container_wrapper,
+header #logo h1 img,
+.main-menu { margin-top: unset !important; }
+
+header #logo h1 img { max-width: 100px !important; }
+
+.main-menu > li,
+.gradient-header { height: unset; }
+
+.watch .floating-movie,
+#movie-description,
+#movie-description-box { margin-top: unset !important; }
+
+#movie-description-paragraph { margin-top: 50px !important; }
+`;
+
+    class CommonPage {
+        styliseHeader() {
+            var _a, _b, _c, _d;
+            replaceClass((_a = document.querySelector("#logo")) === null || _a === void 0 ? void 0 : _a.classList, "span_2", "span_8");
+            replaceClass((_b = document.querySelector("#menu")) === null || _b === void 0 ? void 0 : _b.classList, "span_7", "span_4");
+            document.querySelectorAll(".main-menu > li:not([id])")
+                .forEach(el => el.remove());
+            (_c = document.querySelector("#account-settings")) === null || _c === void 0 ? void 0 : _c.remove();
+            (_d = document.querySelector("#search-outer")) === null || _d === void 0 ? void 0 : _d.remove();
+        }
+        matches(url) {
+            return true;
+        }
+        onVisit() {
+            this.styliseHeader();
+        }
+    }
+    //# sourceMappingURL=common.js.map
 
     const pages = [
+        new CommonPage(),
         new OverviewPage(),
         new EpisodePage(),
     ];
@@ -198,8 +265,8 @@
     for (const page of pages) {
         if (page.matches(url)) {
             page.onVisit();
-            break;
         }
     }
+    //# sourceMappingURL=main.js.map
 
 }());

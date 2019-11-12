@@ -1,5 +1,6 @@
 import { Page } from "../page";
 import { loadSeriesInfo } from "../series";
+import { replaceClass, injectStyle } from "../utils";
 
 function getOverviewLink(): string {
     const href = document.querySelector("#description-ul")?.getElementsByTagName("a")[0]?.href;
@@ -7,10 +8,19 @@ function getOverviewLink(): string {
     return href;
 }
 
-function replaceClass(cl: DOMTokenList | undefined, c1: string, c2: string): void {
-    if (!cl) return;
-    cl.remove(c1);
-    cl.add(c2);
+function fixMonoAudio(video: HTMLVideoElement) {
+    const context = new AudioContext();
+    // TODO doesn't work because of CORS...
+    const source = context.createMediaElementSource(video);
+
+    const splitter = context.createChannelSplitter();
+    source.connect(splitter);
+
+    const merger = context.createChannelMerger();
+    splitter.connect(merger, 0, 0);
+    splitter.connect(merger, 0, 1);
+
+    merger.connect(context.destination);
 }
 
 const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/
@@ -63,17 +73,18 @@ export class EpisodePage implements Page {
     }
 
     stylise() {
+        document.querySelector(".watch-info-background")?.remove();
+        document.querySelector("#slider.parallax")?.remove();
+        const el = document.querySelector("#slider.videostream");
+        if (el) {
+            el.removeAttribute("id");
+            el.classList.remove("slider");
+        }
+
         document.querySelector("#comment-wrapper")?.remove();
         document.querySelector("#download-button")?.remove();
 
-        replaceClass(document.querySelector("#logo")?.classList, "span_2", "span_8");
-        replaceClass(document.querySelector("#menu")?.classList, "span_7", "span_4");
-
-        document.querySelectorAll(".main-menu > li:not([id])")
-            .forEach(el => el.remove());
-
-        document.querySelector("#account-settings")?.remove();
-        document.querySelector("#search-outer")?.remove();
+        injectStyle(CUSTOM_CSS);
     }
 
     onVisit(): void {
@@ -86,3 +97,40 @@ export class EpisodePage implements Page {
         this.patchNextEpisodeButton(key);
     }
 }
+
+const CUSTOM_CSS = `
+.movie-summary { transition: filter 1s; }
+
+.movie-summary:not(:hover) { filter: blur(1.5px) opacity(60%); }
+
+form.settings-button { visibility: hidden; }
+
+p.search-rating { display: flex; }
+
+p.search-rating::before { content: none !important; }
+
+p.search-rating::after { content: "/10"; }
+
+.watch #slider.videostream { top: unset; }
+
+.header-content {
+    align-items: center;
+    display: flex;
+    margin: 1% 0;
+}
+
+#container_wrapper,
+header #logo h1 img,
+.main-menu { margin-top: unset !important; }
+
+header #logo h1 img { max-width: 100px !important; }
+
+.main-menu > li,
+.gradient-header { height: unset; }
+
+.watch .floating-movie,
+#movie-description,
+#movie-description-box { margin-top: unset !important; }
+
+#movie-description-paragraph { margin-top: 50px !important; }
+`;
