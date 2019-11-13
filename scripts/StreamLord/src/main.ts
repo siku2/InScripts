@@ -1,6 +1,6 @@
-import { OverviewPage } from "./pages/overview";
-import { EpisodePage } from "./pages/episode";
 import { CommonPage } from "./pages/common";
+import { EpisodePage } from "./pages/episode";
+import { OverviewPage } from "./pages/overview";
 
 const pages = [
     new CommonPage(),

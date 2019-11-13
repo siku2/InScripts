@@ -1,7 +1,9 @@
 {
     "compilerOptions": {
         "strict": true,
+        "allowSyntheticDefaultImports": true,
         "target": "ES2015",
+        "moduleResolution": "node",
     },
     "include": [
         "src/**/*"

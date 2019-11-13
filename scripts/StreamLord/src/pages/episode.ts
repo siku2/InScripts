@@ -1,6 +1,7 @@
 import { Page } from "../page";
 import { loadSeriesInfo } from "../series";
-import { replaceClass, injectStyle } from "../utils";
+import { htmlToElement, injectStyle, querySelectorWait } from "../utils";
+import { VideoSync } from "../video-sync";
 
 function getOverviewLink(): string {
     const href = document.querySelector("#description-ul")?.getElementsByTagName("a")[0]?.href;
@@ -87,9 +88,23 @@ export class EpisodePage implements Page {
         injectStyle(CUSTOM_CSS);
     }
 
+    async addPeerBar() {
+        const target = document.querySelector("#description-ul td:last-child");
+        if (!target) throw new Error("episode description table not found");
+
+        target.append(PEER_BAR_EL);
+
+        const targetBtn = document.getElementById("autostart-btn")!;
+        const videoEl = await querySelectorWait("video", "#container_wrapper") as HTMLVideoElement;
+
+        const sync = new VideoSync(videoEl, targetBtn);
+        sync.listen();
+    }
+
     onVisit(): void {
         this.createVideo();
         this.stylise();
+        this.addPeerBar();
 
         const key = this.getSeriesKey();
         if (!key) throw new Error("no series key found");
@@ -133,4 +148,22 @@ header #logo h1 img { max-width: 100px !important; }
 #movie-description-box { margin-top: unset !important; }
 
 #movie-description-paragraph { margin-top: 50px !important; }
+
+#autostart-btn {
+    cursor: pointer;
+    height: 100%;
+    text-align: center;
+    width: 100%;
+}
+
+#autostart-btn.active {
+    color: #ff361a;
+    font-weight: 1000;
+}
 `;
+
+const PEER_BAR_EL = htmlToElement(`
+<li style="display: flex;justify-content: space-evenly;">
+    <a id="autostart-btn">Autostart</a>
+</li>
+`)!;

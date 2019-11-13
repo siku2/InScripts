@@ -7,6 +7,6 @@
 // @updateURL    https://github.com/siku2/InScripts/raw/master/scripts/StreamLord/dist/script.user.js
 // @downloadURL  https://github.com/siku2/InScripts/raw/master/scripts/StreamLord/dist/script.user.js
 // @match        *://*.streamlord.com/*
-// @grant        none
+// @grant        unsafeWindow
 // @run-at       document-end
 // ==/UserScript==
