@@ -1,73 +1,94 @@
 import { Page } from "../page";
-import { EpisodeInfo, hasSeriesInfo, saveSeriesInfo, SeriesInfo } from "../series";
+import {
+  EpisodeInfo,
+  hasSeriesInfo,
+  saveSeriesInfo,
+  SeriesInfo
+} from "../series";
 
-
-function getDirectText(el: Element): string {
-    return Array.from(el.childNodes)
-        .filter(c => c.nodeType == Node.TEXT_NODE)
-        .map(c => c.textContent)
-        .join('');
+function getDirectText(element: Node): string {
+  return Array.from(element.childNodes)
+    .filter(c => {
+      return c.nodeType === Node.TEXT_NODE;
+    })
+    .map(c => {
+      return c.textContent;
+    })
+    .join("");
 }
 
-function getSeasonFromElement(el: Element): number {
-    const seasonText = el.parentElement
-        ?.querySelector('.season-headline')
-        ?.textContent
-        ?.substring(7);
-    if (!seasonText) throw Error('season text not found');
+function getSeasonFromElement(element: Node): number {
+  const seasonText = element.parentElement
+    ?.querySelector(".season-headline")
+    ?.textContent?.substring(7);
+  if (!seasonText) {
+    throw new Error("season text not found");
+  }
 
-    return parseInt(seasonText);
+  return parseInt(seasonText);
 }
 
-function epInfoFromElement(el: Element): EpisodeInfo {
-    const headEl = el.querySelector('.head');
-    if (!headEl) throw Error('head element not found');
+function epInfoFromElement(element: ParentNode & Node): EpisodeInfo {
+  const headElement = element.querySelector(".head");
+  if (!headElement) {
+    throw new Error("head element not found");
+  }
 
-    const name = getDirectText(headEl);
-    const link = el.querySelector('.content .playpic')
-        ?.getElementsByTagName('a')[0]
-        ?.href;
-    if (!link) throw Error("link not found");
+  const name = getDirectText(headElement);
+  const link = element
+    .querySelector(".content .playpic")
+    ?.getElementsByTagName("a")[0]?.href;
+  if (!link) {
+    throw new Error("link not found");
+  }
 
-    const epText = el.querySelector('.head span')?.textContent;
-    if (!epText) throw Error('episode text not found');
-    const number = parseInt(epText.substring(8));
+  const epText = element.querySelector(".head span")?.textContent;
+  if (!epText) {
+    throw new Error("episode text not found");
+  }
 
-    return new EpisodeInfo(getSeasonFromElement(el), number, name, link);
+  const number = parseInt(epText.substring(8));
+
+  return new EpisodeInfo(getSeasonFromElement(element), number, name, link);
 }
 
 function getEpisodeInfos(): EpisodeInfo[] {
-    return Array
-        .from(document.querySelectorAll('#season-wrapper ul > li'))
-        .map(epInfoFromElement);
+  return Array.from(document.querySelectorAll("#season-wrapper ul > li")).map(
+    epInfoFromElement
+  );
 }
 
 function parseSeriesInfo(): SeriesInfo {
-    const episodes = getEpisodeInfos();
-    return new SeriesInfo(episodes);
+  const episodes = getEpisodeInfos();
+
+  return new SeriesInfo(episodes);
 }
 
-const URL_MATCH = /^\/watch-tvshow-([\w-]+)-\d+\.html$/
+const URL_MATCH = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;
 
 export class OverviewPage implements Page {
-    matches(url: URL): boolean {
-        return URL_MATCH.test(url.pathname);
+  matches(url: URL): boolean {
+    return URL_MATCH.test(url.pathname);
+  }
+
+  getSeriesKey(): string | undefined {
+    const matches = URL_MATCH.exec(location.pathname);
+    if (!matches) {
+      return undefined;
     }
 
-    getSeriesKey(): string | undefined {
-        const matches = URL_MATCH.exec(location.pathname);
-        if (!matches) return undefined;
+    return matches[1];
+  }
 
-        return matches[1];
+  onVisit(): void {
+    const key = this.getSeriesKey();
+    if (!key) {
+      throw new Error("no series key");
     }
 
-    onVisit(): void {
-        const key = this.getSeriesKey();
-        if (!key) throw Error('no series key');
-
-        if (!hasSeriesInfo(key)) {
-            const info = parseSeriesInfo();
-            saveSeriesInfo(key, info);
-        }
+    if (!hasSeriesInfo(key)) {
+      const info = parseSeriesInfo();
+      saveSeriesInfo(key, info);
     }
+  }
 }

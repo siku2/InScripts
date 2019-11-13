@@ -11,6 +11,7 @@
 // @grant        unsafeWindow
 // @run-at       document-end
 // ==/UserScript==
+
 (function () {
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation. All rights reserved.
@@ -41,24 +42,25 @@
             let parent;
             if (parentSelector) {
                 const p = document.querySelector(parentSelector);
-                if (!p)
+                if (!p) {
                     throw new Error("parent not found");
+                }
                 parent = p;
             }
             else {
                 parent = document;
             }
-            return yield new Promise(res => {
+            return new Promise(resolve => {
                 const observer = new MutationObserver(() => {
-                    const el = parent.querySelector(selector);
-                    if (!el)
+                    const element = parent.querySelector(selector);
+                    if (!element)
                         return;
-                    res(el);
+                    resolve(element);
                     observer.disconnect();
                 });
                 observer.observe(parent, {
                     childList: true,
-                    subtree: true,
+                    subtree: true
                 });
             });
         });
@@ -70,9 +72,9 @@
         cl.add(c2);
     }
     function injectStyle(css) {
-        const el = document.createElement("style");
-        el.innerHTML = css;
-        document.body.append(el);
+        const element = document.createElement("style");
+        element.innerHTML = css;
+        document.body.append(element);
     }
     function htmlToElement(html) {
         const template = document.createElement("template");
@@ -85,12 +87,13 @@
             var _a, _b, _c, _d;
             replaceClass((_a = document.querySelector("#logo")) === null || _a === void 0 ? void 0 : _a.classList, "span_2", "span_8");
             replaceClass((_b = document.querySelector("#menu")) === null || _b === void 0 ? void 0 : _b.classList, "span_7", "span_4");
-            document.querySelectorAll(".main-menu > li:not([id])")
-                .forEach(el => el.remove());
+            document
+                .querySelectorAll(".main-menu > li:not([id])")
+                .forEach(element => element.remove());
             (_c = document.querySelector("#account-settings")) === null || _c === void 0 ? void 0 : _c.remove();
             (_d = document.querySelector("#search-outer")) === null || _d === void 0 ? void 0 : _d.remove();
         }
-        matches(url) {
+        matches() {
             return true;
         }
         onVisit() {
@@ -114,17 +117,17 @@
             return this.episodes.filter(ep => ep.season === season);
         }
         getEpisode(season, episode) {
-            return this.episodes.find(ep => ep.season === season && ep.number == episode);
+            return this.episodes.find(ep => ep.season === season && ep.number === episode);
         }
         getNextEpisode(season, episode) {
-            return this.getEpisode(season, episode + 1) || this.getEpisode(season + 1, 1);
+            return (this.getEpisode(season, episode + 1) || this.getEpisode(season + 1, 1));
         }
         get allEpisodes() {
             return this.episodes;
         }
     }
     function hasSeriesInfo(key) {
-        return !!sessionStorage.getItem(key);
+        return Boolean(sessionStorage.getItem(key));
     }
     function loadSeriesInfo(key) {
         const raw = sessionStorage.getItem(key);
@@ -241,20 +244,20 @@
             const item = this.items.shift();
             if (item)
                 return Promise.resolve(item);
-            return new Promise(res => this.waiters.push(res));
+            return new Promise(resolve => this.waiters.push(resolve));
         }
     }
 
     function sanitizeID(id) {
-        id = id.replace(/[^a-zA-Z0-9-_]+/g, "-");
-        id = id.replace(/[-_]+$/, "");
-        id = id.replace(/^[-_]+/, "");
-        return id;
+        return id
+            .replace(/[^a-zA-Z0-9-_]+/g, "-")
+            .replace(/[-_]+$/, "")
+            .replace(/^[-_]+/, "");
     }
     function waitOpen(c) {
-        return new Promise((res, rej) => {
-            c.on("open", res);
-            c.on("error", rej);
+        return new Promise((resolve, reject) => {
+            c.on("open", resolve);
+            c.on("error", reject);
         });
     }
     function createPeer(id) {
@@ -264,37 +267,56 @@
             return peer;
         });
     }
-    function connectPeer(target, onMsg) {
+    function connectPeer(target, onMessage) {
         return __awaiter(this, void 0, void 0, function* () {
             const peer = yield createPeer();
             const conn = peer.connect(target);
-            conn.on("data", onMsg);
+            conn.on("data", onMessage);
             yield waitOpen(conn);
             return [peer, conn];
         });
     }
-    function waitForConnection(id, onMsg) {
+    function waitForConnection(id, onMessage) {
         return __awaiter(this, void 0, void 0, function* () {
             const peer = yield createPeer(id);
-            const conn = yield new Promise(res => {
-                peer.on("connection", res);
-            });
-            conn.on("data", onMsg);
+            const conn = yield new Promise(resolve => peer.on("connection", resolve));
+            conn.on("data", onMessage);
             yield waitOpen(conn);
             return [peer, conn];
+        });
+    }
+    function getConnection(onMessage) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const id = sanitizeID(location.href);
+            console.debug("connecting to", id);
+            let connTuple;
+            let isMaster;
+            try {
+                connTuple = yield waitForConnection(id, onMessage);
+                isMaster = true;
+            }
+            catch (error) {
+                if (error.type !== "unavailable-id") {
+                    throw error;
+                }
+                connTuple = yield connectPeer(id, onMessage);
+                isMaster = false;
+            }
+            console.debug("connected", connTuple, "master:", isMaster);
+            return [connTuple, isMaster];
         });
     }
     function sleep(delay) {
-        return new Promise(res => setTimeout(res, delay));
+        return new Promise(resolve => setTimeout(resolve, delay));
     }
     function sleepUntil(d) {
         return sleep(d - Date.now());
     }
     class VideoSync {
-        constructor(videoEl, btnEl) {
-            this.videoEl = videoEl;
-            this.jwplayer = window["unsafeWindow"].jwplayer();
-            this.btnEl = btnEl;
+        constructor(videoElement, buttonElement) {
+            this.videoEl = videoElement;
+            this.jwplayer = unsafeWindow.jwplayer();
+            this.btnEl = buttonElement;
             this.hasTextProg = false;
             this.toggled = false;
             this.progressTextStack = [];
@@ -312,10 +334,11 @@
             }
             return () => {
                 const index = this.progressTextStack.indexOf(s);
-                if (index == -1) {
+                if (index === -1) {
                     const nextText = this.progressTextStack.shift();
-                    if (!nextText)
+                    if (!nextText) {
                         this.hasTextProg = false;
+                    }
                     this.btnEl.textContent = nextText || "done";
                 }
                 else {
@@ -323,11 +346,11 @@
                 }
             };
         }
-        withProgressText(text, cb) {
+        withProgressText(text, callback) {
             return __awaiter(this, void 0, void 0, function* () {
                 const done = this.addProgressText(text);
                 try {
-                    return yield Promise.resolve(cb());
+                    return yield Promise.resolve(callback());
                 }
                 finally {
                     done();
@@ -339,43 +362,26 @@
                 switch (this.jwplayer.getState()) {
                     case "IDLE":
                         this.jwplayer.play();
+                    // fall through
                     case "BUFFERING":
-                        yield new Promise(res => this.videoEl.addEventListener("play", res, { once: true }));
+                        yield new Promise(resolve => {
+                            return this.videoEl.addEventListener("play", resolve, { once: true });
+                        });
                         this.jwplayer.pause();
                         break;
                 }
             });
         }
-        getConnection(onMsg) {
-            return __awaiter(this, void 0, void 0, function* () {
-                const id = sanitizeID(location.href);
-                console.debug("connecting to", id);
-                let connTuple;
-                let isMaster;
-                try {
-                    connTuple = yield waitForConnection(id, onMsg);
-                    isMaster = true;
-                }
-                catch (e) {
-                    if (e.type != "unavailable-id")
-                        throw e;
-                    connTuple = yield connectPeer(id, onMsg);
-                    isMaster = false;
-                }
-                console.debug("connected", connTuple, "master:", isMaster);
-                return [connTuple, isMaster];
-            });
-        }
         showCountdownTo(d) {
             return __awaiter(this, void 0, void 0, function* () {
-                while (true) {
+                for (;;) {
                     const diff = d - Date.now();
                     if (diff <= 0)
                         break;
                     this.btnEl.textContent = (Math.floor(diff / 1000) + 1).toString();
-                    yield sleep((diff % 1000) || 1000);
+                    yield sleep(diff % 1000 || 1000);
                 }
-                this.btnEl.textContent = "Autostarted";
+                this.btnEl.textContent = "Started";
             });
         }
         startCountdown() {
@@ -384,26 +390,26 @@
                 this.hasTextProg = false;
                 this.btnEl.classList.add("active");
                 const videoLoadedPromise = this.withProgressText("loading video", () => this.waitVideoLoaded());
-                const msgQueue = new AsyncQueue();
-                const [[peer, conn], isMaster] = yield this.withProgressText("establishing connection", () => this.getConnection(msg => {
-                    console.debug("received", msg);
-                    msgQueue.put(msg);
+                const messageQueue = new AsyncQueue();
+                const [[peer, conn], isMaster] = yield this.withProgressText("establishing connection", () => getConnection(message => {
+                    console.debug("received", message);
+                    messageQueue.put(message);
                 }));
                 try {
                     yield videoLoadedPromise;
                     console.debug("video done");
                     conn.send("READY");
-                    yield this.withProgressText("waiting for remote to finish loading", () => msgQueue.get());
+                    yield this.withProgressText("waiting for remote to finish loading", () => messageQueue.get());
                     console.debug("remote done");
                     let startTime;
                     if (isMaster) {
                         startTime = Date.now() + 3000;
                         conn.send(startTime);
                         console.debug("waiting for acknowledgement");
-                        yield msgQueue.get();
+                        yield messageQueue.get();
                     }
                     else {
-                        startTime = yield this.withProgressText("waiting for start time", () => msgQueue.get());
+                        startTime = yield this.withProgressText("waiting for start time", () => messageQueue.get());
                         conn.send("ACK");
                     }
                     console.debug("sleeping until", startTime, "delta:", startTime - Date.now(), "ms");
@@ -418,106 +424,43 @@
             });
         }
         stopCountdown() {
-            // this.toggled = false;
+            // This.toggled = false;
             // this.btnEl.classList.remove("active");
         }
         startVideo() {
             this.jwplayer.seek(0);
         }
         toggleCountdown() {
-            if (this.toggled)
+            if (this.toggled) {
                 this.stopCountdown();
-            else
+            }
+            else {
                 this.startCountdown();
+            }
         }
     }
 
     function getOverviewLink() {
         var _a, _b;
-        const href = (_b = (_a = document.querySelector("#description-ul")) === null || _a === void 0 ? void 0 : _a.getElementsByTagName("a")[0]) === null || _b === void 0 ? void 0 : _b.href;
-        if (!href)
+        const href = (_b = (_a = document
+            .querySelector("#description-ul")) === null || _a === void 0 ? void 0 : _a.getElementsByTagName("a")[0]) === null || _b === void 0 ? void 0 : _b.href;
+        if (!href) {
             throw new Error("episode list link not found");
+        }
         return href;
     }
+    // Function fixMonoAudio(video: HTMLVideoElement): void {
+    //   const context = new AudioContext()
+    //   // TODO doesn't work because of CORS...
+    //   const source = context.createMediaElementSource(video)
+    //   const splitter = context.createChannelSplitter()
+    //   source.connect(splitter)
+    //   const merger = context.createChannelMerger()
+    //   splitter.connect(merger, 0, 0)
+    //   splitter.connect(merger, 0, 1)
+    //   merger.connect(context.destination)
+    // }
     const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
-    class EpisodePage {
-        matches(url) {
-            return URL_MATCH.test(url.pathname);
-        }
-        getSeriesKey() {
-            const matches = URL_MATCH.exec(location.pathname);
-            if (!matches)
-                return undefined;
-            return matches[1];
-        }
-        getEpNumber() {
-            const matches = URL_MATCH.exec(location.pathname);
-            if (!matches)
-                return [1, 1];
-            const rawS = matches[2];
-            const rawE = matches[3];
-            return [parseInt(rawS), parseInt(rawE)];
-        }
-        patchNextEpisodeButton(key) {
-            const nextBtn = document.querySelector("#movie-description-box + a");
-            if (!nextBtn)
-                throw new Error("next episode button not found");
-            nextBtn.removeAttribute("onclick");
-            const info = loadSeriesInfo(key);
-            if (info) {
-                const [s, e] = this.getEpNumber();
-                const ep = info.getNextEpisode(s, e);
-                if (!ep)
-                    return;
-                nextBtn.href = ep.link;
-            }
-            else {
-                // TODO add query string which will be read by the overview page.
-                nextBtn.href = getOverviewLink();
-            }
-        }
-        createVideo() {
-            var _a;
-            const sliderStyle = (_a = document.querySelector("#slider")) === null || _a === void 0 ? void 0 : _a.style;
-            if (!sliderStyle)
-                return;
-            sliderStyle.visibility = "hidden";
-        }
-        stylise() {
-            var _a, _b, _c, _d;
-            (_a = document.querySelector(".watch-info-background")) === null || _a === void 0 ? void 0 : _a.remove();
-            (_b = document.querySelector("#slider.parallax")) === null || _b === void 0 ? void 0 : _b.remove();
-            const el = document.querySelector("#slider.videostream");
-            if (el) {
-                el.removeAttribute("id");
-                el.classList.remove("slider");
-            }
-            (_c = document.querySelector("#comment-wrapper")) === null || _c === void 0 ? void 0 : _c.remove();
-            (_d = document.querySelector("#download-button")) === null || _d === void 0 ? void 0 : _d.remove();
-            injectStyle(CUSTOM_CSS);
-        }
-        addPeerBar() {
-            return __awaiter(this, void 0, void 0, function* () {
-                const target = document.querySelector("#description-ul td:last-child");
-                if (!target)
-                    throw new Error("episode description table not found");
-                target.append(PEER_BAR_EL);
-                const targetBtn = document.getElementById("autostart-btn");
-                const videoEl = yield querySelectorWait("video", "#container_wrapper");
-                const sync = new VideoSync(videoEl, targetBtn);
-                sync.listen();
-            });
-        }
-        onVisit() {
-            this.createVideo();
-            this.stylise();
-            this.addPeerBar();
-            const key = this.getSeriesKey();
-            if (!key)
-                throw new Error("no series key found");
-            this.patchNextEpisodeButton(key);
-        }
-    }
     const CUSTOM_CSS = `
 .movie-summary { transition: filter 1s; }
 
@@ -568,42 +511,132 @@ header #logo h1 img { max-width: 100px !important; }
 `;
     const PEER_BAR_EL = htmlToElement(`
 <li style="display: flex;justify-content: space-evenly;">
-    <a id="autostart-btn">Autostart</a>
+    <a id="autostart-btn">Watch Together™</a>
 </li>
 `);
-
-    function getDirectText(el) {
-        return Array.from(el.childNodes)
-            .filter(c => c.nodeType == Node.TEXT_NODE)
-            .map(c => c.textContent)
-            .join('');
+    class EpisodePage {
+        matches(url) {
+            return URL_MATCH.test(url.pathname);
+        }
+        getSeriesKey() {
+            const matches = URL_MATCH.exec(location.pathname);
+            if (!matches)
+                return undefined;
+            return matches[1];
+        }
+        getEpNumber() {
+            const matches = URL_MATCH.exec(location.pathname);
+            if (!matches)
+                return [1, 1];
+            const rawS = matches[2];
+            const rawE = matches[3];
+            return [parseInt(rawS, 10), parseInt(rawE, 10)];
+        }
+        patchNextEpisodeButton(key) {
+            const nextButton = document.querySelector("#movie-description-box + a");
+            if (!nextButton) {
+                throw new Error("next episode button not found");
+            }
+            nextButton.removeAttribute("onclick");
+            const info = loadSeriesInfo(key);
+            if (info) {
+                const [s, e] = this.getEpNumber();
+                const ep = info.getNextEpisode(s, e);
+                if (!ep)
+                    return;
+                nextButton.href = ep.link;
+            }
+            else {
+                // TODO add query string which will be read by the overview page.
+                nextButton.href = getOverviewLink();
+            }
+        }
+        createVideo() {
+            var _a;
+            const sliderStyle = (_a = document.querySelector("#slider")) === null || _a === void 0 ? void 0 : _a.style;
+            if (!sliderStyle)
+                return;
+            sliderStyle.visibility = "hidden";
+        }
+        stylise() {
+            var _a, _b, _c, _d;
+            (_a = document.querySelector(".watch-info-background")) === null || _a === void 0 ? void 0 : _a.remove();
+            (_b = document.querySelector("#slider.parallax")) === null || _b === void 0 ? void 0 : _b.remove();
+            const element = document.querySelector("#slider.videostream");
+            if (element) {
+                element.removeAttribute("id");
+                element.classList.remove("slider");
+            }
+            (_c = document.querySelector("#comment-wrapper")) === null || _c === void 0 ? void 0 : _c.remove();
+            (_d = document.querySelector("#download-button")) === null || _d === void 0 ? void 0 : _d.remove();
+            injectStyle(CUSTOM_CSS);
+        }
+        addPeerBar() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const target = document.querySelector("#description-ul td:last-child");
+                if (!target) {
+                    throw new Error("episode description table not found");
+                }
+                target.append(PEER_BAR_EL);
+                const targetButton = document.querySelector("#autostart-btn");
+                if (!targetButton) {
+                    throw new Error("button not found");
+                }
+                const videoElement = (yield querySelectorWait("video", "#container_wrapper"));
+                new VideoSync(videoElement, targetButton).listen();
+            });
+        }
+        onVisit() {
+            this.createVideo();
+            this.stylise();
+            this.addPeerBar();
+            const key = this.getSeriesKey();
+            if (!key) {
+                throw new Error("no series key found");
+            }
+            this.patchNextEpisodeButton(key);
+        }
     }
-    function getSeasonFromElement(el) {
+
+    function getDirectText(element) {
+        return Array.from(element.childNodes)
+            .filter(c => {
+            return c.nodeType === Node.TEXT_NODE;
+        })
+            .map(c => {
+            return c.textContent;
+        })
+            .join("");
+    }
+    function getSeasonFromElement(element) {
         var _a, _b, _c;
-        const seasonText = (_c = (_b = (_a = el.parentElement) === null || _a === void 0 ? void 0 : _a.querySelector('.season-headline')) === null || _b === void 0 ? void 0 : _b.textContent) === null || _c === void 0 ? void 0 : _c.substring(7);
-        if (!seasonText)
-            throw Error('season text not found');
+        const seasonText = (_c = (_b = (_a = element.parentElement) === null || _a === void 0 ? void 0 : _a.querySelector(".season-headline")) === null || _b === void 0 ? void 0 : _b.textContent) === null || _c === void 0 ? void 0 : _c.substring(7);
+        if (!seasonText) {
+            throw new Error("season text not found");
+        }
         return parseInt(seasonText);
     }
-    function epInfoFromElement(el) {
+    function epInfoFromElement(element) {
         var _a, _b, _c;
-        const headEl = el.querySelector('.head');
-        if (!headEl)
-            throw Error('head element not found');
-        const name = getDirectText(headEl);
-        const link = (_b = (_a = el.querySelector('.content .playpic')) === null || _a === void 0 ? void 0 : _a.getElementsByTagName('a')[0]) === null || _b === void 0 ? void 0 : _b.href;
-        if (!link)
-            throw Error("link not found");
-        const epText = (_c = el.querySelector('.head span')) === null || _c === void 0 ? void 0 : _c.textContent;
-        if (!epText)
-            throw Error('episode text not found');
+        const headElement = element.querySelector(".head");
+        if (!headElement) {
+            throw new Error("head element not found");
+        }
+        const name = getDirectText(headElement);
+        const link = (_b = (_a = element
+            .querySelector(".content .playpic")) === null || _a === void 0 ? void 0 : _a.getElementsByTagName("a")[0]) === null || _b === void 0 ? void 0 : _b.href;
+        if (!link) {
+            throw new Error("link not found");
+        }
+        const epText = (_c = element.querySelector(".head span")) === null || _c === void 0 ? void 0 : _c.textContent;
+        if (!epText) {
+            throw new Error("episode text not found");
+        }
         const number = parseInt(epText.substring(8));
-        return new EpisodeInfo(getSeasonFromElement(el), number, name, link);
+        return new EpisodeInfo(getSeasonFromElement(element), number, name, link);
     }
     function getEpisodeInfos() {
-        return Array
-            .from(document.querySelectorAll('#season-wrapper ul > li'))
-            .map(epInfoFromElement);
+        return Array.from(document.querySelectorAll("#season-wrapper ul > li")).map(epInfoFromElement);
     }
     function parseSeriesInfo() {
         const episodes = getEpisodeInfos();
@@ -616,14 +649,16 @@ header #logo h1 img { max-width: 100px !important; }
         }
         getSeriesKey() {
             const matches = URL_MATCH$1.exec(location.pathname);
-            if (!matches)
+            if (!matches) {
                 return undefined;
+            }
             return matches[1];
         }
         onVisit() {
             const key = this.getSeriesKey();
-            if (!key)
-                throw Error('no series key');
+            if (!key) {
+                throw new Error("no series key");
+            }
             if (!hasSeriesInfo(key)) {
                 const info = parseSeriesInfo();
                 saveSeriesInfo(key, info);
@@ -631,11 +666,7 @@ header #logo h1 img { max-width: 100px !important; }
         }
     }
 
-    const pages = [
-        new CommonPage(),
-        new OverviewPage(),
-        new EpisodePage(),
-    ];
+    const pages = [new CommonPage(), new OverviewPage(), new EpisodePage()];
     const url = new URL(location.href);
     for (const page of pages) {
         if (page.matches(url)) {
