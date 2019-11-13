@@ -62,7 +62,7 @@ async function waitForConnection(
 async function getConnection(
   onMessage: MsgHandler
 ): Promise<[PeerConnTuple, boolean]> {
-  const id = sanitizeID(location.href);
+  const id = sanitizeID(location.pathname);
   console.debug("connecting to", id);
 
   let connTuple: PeerConnTuple;
