@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.1
+// @version      0.3.2
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -9,6 +9,7 @@
 // @downloadURL  https://github.com/siku2/InScripts/raw/master/scripts/StreamLord/dist/script.user.js
 // @match        *://*.streamlord.com/*
 // @grant        unsafeWindow
+// @connect      *
 // @run-at       document-end
 // ==/UserScript==
 
