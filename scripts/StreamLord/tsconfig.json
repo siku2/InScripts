@@ -1,11 +1,9 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "ES2015",
-        "moduleResolution": "node",
-    },
-    "include": [
-        "src/**/*"
-    ]
+  "compilerOptions": {
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2018",
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*"]
 }
