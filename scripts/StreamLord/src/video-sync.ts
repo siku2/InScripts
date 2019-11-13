@@ -225,13 +225,7 @@ export class VideoSync {
         conn.send("ACK");
       }
 
-      console.debug(
-        "sleeping until",
-        startTime,
-        "delta:",
-        startTime - Date.now(),
-        "ms"
-      );
+      console.debug("sleeping for", startTime - Date.now(), "ms");
       this.showCountdownTo(startTime);
       await sleepUntil(startTime);
 

@@ -8,16 +8,32 @@ export class EpisodeInfo {
 }
 
 export class SeriesInfo {
-  constructor(private readonly episodes: EpisodeInfo[]) {}
+  private readonly seasons: {
+    [season: number]: { [episode: number]: EpisodeInfo };
+  };
+
+  constructor(episodes: EpisodeInfo[]) {
+    this.seasons = {};
+
+    for (const ep of episodes) {
+      let season = this.seasons[ep.season];
+      if (!season) {
+        season = this.seasons[ep.season] = {};
+      }
+
+      season[ep.number] = ep;
+    }
+  }
 
   public getSeason(season: number): EpisodeInfo[] {
-    return this.episodes.filter(ep => ep.season === season);
+    const eps = this.seasons[season];
+    if (!eps) return [];
+
+    return Object.values(eps);
   }
 
   public getEpisode(season: number, episode: number): EpisodeInfo | undefined {
-    return this.episodes.find(
-      ep => ep.season === season && ep.number === episode
-    );
+    return this.seasons[season]?.[episode];
   }
 
   public getNextEpisode(
@@ -30,7 +46,7 @@ export class SeriesInfo {
   }
 
   public get allEpisodes(): EpisodeInfo[] {
-    return this.episodes;
+    return Object.values(this.seasons).flatMap(eps => Object.values(eps));
   }
 }
 

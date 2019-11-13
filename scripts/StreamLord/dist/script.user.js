@@ -85,19 +85,30 @@
   }
   class SeriesInfo {
       constructor(episodes) {
-          this.episodes = episodes;
+          this.seasons = {};
+          for (const ep of episodes) {
+              let season = this.seasons[ep.season];
+              if (!season) {
+                  season = this.seasons[ep.season] = {};
+              }
+              season[ep.number] = ep;
+          }
       }
       getSeason(season) {
-          return this.episodes.filter(ep => ep.season === season);
+          const eps = this.seasons[season];
+          if (!eps)
+              return [];
+          return Object.values(eps);
       }
       getEpisode(season, episode) {
-          return this.episodes.find(ep => ep.season === season && ep.number === episode);
+          var _a;
+          return (_a = this.seasons[season]) === null || _a === void 0 ? void 0 : _a[episode];
       }
       getNextEpisode(season, episode) {
           return (this.getEpisode(season, episode + 1) || this.getEpisode(season + 1, 1));
       }
       get allEpisodes() {
-          return this.episodes;
+          return Object.values(this.seasons).flatMap(eps => Object.values(eps));
       }
   }
   function hasSeriesInfo(key) {
@@ -371,7 +382,7 @@
                   startTime = await this.withProgressText("waiting for start time", () => messageQueue.get());
                   conn.send("ACK");
               }
-              console.debug("sleeping until", startTime, "delta:", startTime - Date.now(), "ms");
+              console.debug("sleeping for", startTime - Date.now(), "ms");
               this.showCountdownTo(startTime);
               await sleepUntil(startTime);
               this.startVideo();
