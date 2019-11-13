@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.2.0
+// @version      0.3.0
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -79,7 +79,6 @@
         template.innerHTML = html.trim();
         return template.content.firstChild || undefined;
     }
-    //# sourceMappingURL=utils.js.map
 
     class CommonPage {
         styliseHeader() {
@@ -98,7 +97,6 @@
             this.styliseHeader();
         }
     }
-    //# sourceMappingURL=common.js.map
 
     class EpisodeInfo {
         constructor(season, number, name, link) {
@@ -138,7 +136,6 @@
         const raw = JSON.stringify(info.allEpisodes);
         sessionStorage.setItem(key, raw);
     }
-    //# sourceMappingURL=series.js.map
 
     function commonjsRequire () {
     	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
@@ -222,7 +219,7 @@
     },{"eventemitter3":"2JJl","./util":"BHXf","./logger":"8WOs","./socket":"wJlv","./mediaconnection":"dbHP","./dataconnection":"GBTQ","./enums":"9ZRY","./api":"in7L"}],"iTK6":[function(require,module,exports) {
     Object.defineProperty(exports,"__esModule",{value:!0});var e=require("./util"),r=require("./peer");exports.peerjs={Peer:r.Peer,util:e.util},exports.default=r.Peer,window.peerjs=exports.peerjs,window.Peer=r.Peer;
     },{"./util":"BHXf","./peer":"Hxpd"}]},{},["iTK6"]);
-    //# sourceMappingURL=/peerjs.min.js.map
+
     });
 
     var Peer = unwrapExports(peerjs_min);
@@ -247,7 +244,6 @@
             return new Promise(res => this.waiters.push(res));
         }
     }
-    //# sourceMappingURL=async-queue.js.map
 
     function sanitizeID(id) {
         id = id.replace(/[^a-zA-Z0-9-_]+/g, "-");
@@ -575,7 +571,6 @@ header #logo h1 img { max-width: 100px !important; }
     <a id="autostart-btn">Autostart</a>
 </li>
 `);
-    //# sourceMappingURL=episode.js.map
 
     function getDirectText(el) {
         return Array.from(el.childNodes)
@@ -635,7 +630,6 @@ header #logo h1 img { max-width: 100px !important; }
             }
         }
     }
-    //# sourceMappingURL=overview.js.map
 
     const pages = [
         new CommonPage(),
@@ -648,6 +642,5 @@ header #logo h1 img { max-width: 100px !important; }
             page.onVisit();
         }
     }
-    //# sourceMappingURL=main.js.map
 
 }());
