@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.2
+// @version      0.3.3
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord

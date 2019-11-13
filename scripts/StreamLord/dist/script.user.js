@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.2
+// @version      0.3.3
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -608,6 +608,10 @@ header #logo h1 img { max-width: 100px !important; }
   }
   function parseSeriesInfo() {
       const episodes = getEpisodeInfos();
+      if (!episodes) {
+          alert("refusing to store no episodes");
+          throw new Error("no episodes found!");
+      }
       return new SeriesInfo(episodes);
   }
   const URL_MATCH$1 = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;

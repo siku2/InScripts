@@ -60,6 +60,10 @@ function getEpisodeInfos(): EpisodeInfo[] {
 
 function parseSeriesInfo(): SeriesInfo {
   const episodes = getEpisodeInfos();
+  if (!episodes) {
+    alert("refusing to store no episodes");
+    throw new Error("no episodes found!");
+  }
 
   return new SeriesInfo(episodes);
 }
