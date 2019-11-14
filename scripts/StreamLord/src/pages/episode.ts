@@ -14,21 +14,6 @@ function getOverviewLink(): string {
   return href;
 }
 
-// Function fixMonoAudio(video: HTMLVideoElement): void {
-//   const context = new AudioContext()
-//   // TODO doesn't work because of CORS...
-//   const source = context.createMediaElementSource(video)
-
-//   const splitter = context.createChannelSplitter()
-//   source.connect(splitter)
-
-//   const merger = context.createChannelMerger()
-//   splitter.connect(merger, 0, 0)
-//   splitter.connect(merger, 0, 1)
-
-//   merger.connect(context.destination)
-// }
-
 const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
 
 const CUSTOM_CSS = `
@@ -86,6 +71,16 @@ const PEER_BAR_EL = htmlToElement(`
 </li>
 `) as HTMLElement;
 
+function getEpNumber(): [number, number] {
+  const matches = URL_MATCH.exec(location.pathname);
+  if (!matches) return [1, 1];
+
+  const rawS = matches[2];
+  const rawE = matches[3];
+
+  return [parseInt(rawS, 10), parseInt(rawE, 10)];
+}
+
 export class EpisodePage implements Page {
   matches(url: URL): boolean {
     return URL_MATCH.test(url.pathname);
@@ -98,36 +93,28 @@ export class EpisodePage implements Page {
     return matches[1];
   }
 
-  getEpNumber(): [number, number] {
-    const matches = URL_MATCH.exec(location.pathname);
-    if (!matches) return [1, 1];
-
-    const rawS = matches[2];
-    const rawE = matches[3];
-
-    return [parseInt(rawS, 10), parseInt(rawE, 10)];
-  }
-
   patchNextEpisodeButton(key: string): void {
+    const [s, e] = getEpNumber();
+    const ep = loadSeriesInfo(key)?.getNextEpisode(s, e);
+
     const nextButton = document.querySelector(
       "#movie-description-box + a"
     ) as HTMLAnchorElement | null;
-    if (!nextButton) {
-      throw new Error("next episode button not found");
+
+    if (nextButton) {
+      nextButton.removeAttribute("onclick");
+
+      const ref = document.getElementById("movie-description-box");
+      nextButton.parentElement?.insertBefore(nextButton, ref);
     }
 
-    nextButton.removeAttribute("onclick");
-
-    const info = loadSeriesInfo(key);
-    if (info) {
-      const [s, e] = this.getEpNumber();
-      const ep = info.getNextEpisode(s, e);
-      if (!ep) return;
-
+    if (ep && nextButton) {
       nextButton.href = ep.link;
-    } else {
-      // TODO add query string which will be read by the overview page.
+    } else if (nextButton) {
+      console.info("have button but no next episode");
       nextButton.href = getOverviewLink();
+    } else if (ep) {
+      throw new Error("next episode button not found");
     }
   }
 
@@ -141,6 +128,8 @@ export class EpisodePage implements Page {
   }
 
   stylise(): void {
+    injectStyle(CUSTOM_CSS);
+
     document.querySelector(".watch-info-background")?.remove();
     document.querySelector("#slider.parallax")?.remove();
 
@@ -153,7 +142,13 @@ export class EpisodePage implements Page {
     document.querySelector("#comment-wrapper")?.remove();
     document.querySelector("#download-button")?.remove();
 
-    injectStyle(CUSTOM_CSS);
+    const [s, e] = getEpNumber();
+    document
+      .querySelector("#description-ul td:first-child")
+      ?.insertAdjacentHTML(
+        "afterend",
+        `<td><li>Episode</li><li>${s} - ${e}</li></td>`
+      );
   }
 
   async addPeerBar(): Promise<void> {
@@ -178,8 +173,9 @@ export class EpisodePage implements Page {
   }
 
   onVisit(): void {
-    this.createVideo();
     this.stylise();
+
+    this.createVideo();
     this.addPeerBar();
 
     const key = this.getSeriesKey();

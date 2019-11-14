@@ -51,7 +51,11 @@ export class SeriesInfo {
 }
 
 export function hasSeriesInfo(key: string): boolean {
-  return Boolean(sessionStorage.getItem(key));
+  const raw = sessionStorage.getItem(key);
+  if (!raw) return false;
+
+  // ignore empty array
+  return raw !== "[]";
 }
 
 export function loadSeriesInfo(key: string): SeriesInfo | undefined {

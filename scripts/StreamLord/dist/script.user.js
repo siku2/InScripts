@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.4
+// @version      0.3.5
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -56,6 +56,7 @@
       template.innerHTML = html.trim();
       return template.content.firstChild || undefined;
   }
+  //# sourceMappingURL=utils.js.map
 
   class CommonPage {
       styliseHeader() {
@@ -75,6 +76,7 @@
           this.styliseHeader();
       }
   }
+  //# sourceMappingURL=common.js.map
 
   class EpisodeInfo {
       constructor(season, number, name, link) {
@@ -113,7 +115,11 @@
       }
   }
   function hasSeriesInfo(key) {
-      return Boolean(sessionStorage.getItem(key));
+      const raw = sessionStorage.getItem(key);
+      if (!raw)
+          return false;
+      // ignore empty array
+      return raw !== "[]";
   }
   function loadSeriesInfo(key) {
       const raw = sessionStorage.getItem(key);
@@ -125,6 +131,7 @@
       const raw = JSON.stringify(info.allEpisodes);
       sessionStorage.setItem(key, raw);
   }
+  //# sourceMappingURL=series.js.map
 
   function commonjsRequire () {
   	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
@@ -208,7 +215,7 @@
   },{"eventemitter3":"2JJl","./util":"BHXf","./logger":"8WOs","./socket":"wJlv","./mediaconnection":"dbHP","./dataconnection":"GBTQ","./enums":"9ZRY","./api":"in7L"}],"iTK6":[function(require,module,exports) {
   Object.defineProperty(exports,"__esModule",{value:!0});var e=require("./util"),r=require("./peer");exports.peerjs={Peer:r.Peer,util:e.util},exports.default=r.Peer,window.peerjs=exports.peerjs,window.Peer=r.Peer;
   },{"./util":"BHXf","./peer":"Hxpd"}]},{},["iTK6"]);
-
+  //# sourceMappingURL=/peerjs.min.js.map
   });
 
   var Peer = unwrapExports(peerjs_min);
@@ -233,6 +240,7 @@
           return new Promise(resolve => this.waiters.push(resolve));
       }
   }
+  //# sourceMappingURL=async-queue.js.map
 
   function sanitizeID(id) {
       return id
@@ -266,7 +274,7 @@
       return [peer, conn];
   }
   async function getConnection(onMessage) {
-      const id = sanitizeID(location.href);
+      const id = sanitizeID(location.pathname);
       console.debug("connecting to", id);
       let connTuple;
       let isMaster;
@@ -409,6 +417,7 @@
           }
       }
   }
+  //# sourceMappingURL=video-sync.js.map
 
   function getOverviewLink() {
       var _a, _b;
@@ -419,17 +428,6 @@
       }
       return href;
   }
-  // Function fixMonoAudio(video: HTMLVideoElement): void {
-  //   const context = new AudioContext()
-  //   // TODO doesn't work because of CORS...
-  //   const source = context.createMediaElementSource(video)
-  //   const splitter = context.createChannelSplitter()
-  //   source.connect(splitter)
-  //   const merger = context.createChannelMerger()
-  //   splitter.connect(merger, 0, 0)
-  //   splitter.connect(merger, 0, 1)
-  //   merger.connect(context.destination)
-  // }
   const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
   const CUSTOM_CSS = `
 .movie-summary { transition: filter 1s; }
@@ -484,6 +482,14 @@ header #logo h1 img { max-width: 100px !important; }
     <a id="autostart-btn">Watch Together™</a>
 </li>
 `);
+  function getEpNumber() {
+      const matches = URL_MATCH.exec(location.pathname);
+      if (!matches)
+          return [1, 1];
+      const rawS = matches[2];
+      const rawE = matches[3];
+      return [parseInt(rawS, 10), parseInt(rawE, 10)];
+  }
   class EpisodePage {
       matches(url) {
           return URL_MATCH.test(url.pathname);
@@ -494,31 +500,25 @@ header #logo h1 img { max-width: 100px !important; }
               return undefined;
           return matches[1];
       }
-      getEpNumber() {
-          const matches = URL_MATCH.exec(location.pathname);
-          if (!matches)
-              return [1, 1];
-          const rawS = matches[2];
-          const rawE = matches[3];
-          return [parseInt(rawS, 10), parseInt(rawE, 10)];
-      }
       patchNextEpisodeButton(key) {
+          var _a, _b;
+          const [s, e] = getEpNumber();
+          const ep = (_a = loadSeriesInfo(key)) === null || _a === void 0 ? void 0 : _a.getNextEpisode(s, e);
           const nextButton = document.querySelector("#movie-description-box + a");
-          if (!nextButton) {
-              throw new Error("next episode button not found");
+          if (nextButton) {
+              nextButton.removeAttribute("onclick");
+              const ref = document.getElementById("movie-description-box");
+              (_b = nextButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(nextButton, ref);
           }
-          nextButton.removeAttribute("onclick");
-          const info = loadSeriesInfo(key);
-          if (info) {
-              const [s, e] = this.getEpNumber();
-              const ep = info.getNextEpisode(s, e);
-              if (!ep)
-                  return;
+          if (ep && nextButton) {
               nextButton.href = ep.link;
           }
-          else {
-              // TODO add query string which will be read by the overview page.
+          else if (nextButton) {
+              console.info("have button but no next episode");
               nextButton.href = getOverviewLink();
+          }
+          else if (ep) {
+              throw new Error("next episode button not found");
           }
       }
       createVideo() {
@@ -529,7 +529,8 @@ header #logo h1 img { max-width: 100px !important; }
           sliderStyle.visibility = "hidden";
       }
       stylise() {
-          var _a, _b, _c, _d;
+          var _a, _b, _c, _d, _e;
+          injectStyle(CUSTOM_CSS);
           (_a = document.querySelector(".watch-info-background")) === null || _a === void 0 ? void 0 : _a.remove();
           (_b = document.querySelector("#slider.parallax")) === null || _b === void 0 ? void 0 : _b.remove();
           const element = document.querySelector("#slider.videostream");
@@ -539,7 +540,9 @@ header #logo h1 img { max-width: 100px !important; }
           }
           (_c = document.querySelector("#comment-wrapper")) === null || _c === void 0 ? void 0 : _c.remove();
           (_d = document.querySelector("#download-button")) === null || _d === void 0 ? void 0 : _d.remove();
-          injectStyle(CUSTOM_CSS);
+          const [s, e] = getEpNumber();
+          (_e = document
+              .querySelector("#description-ul td:first-child")) === null || _e === void 0 ? void 0 : _e.insertAdjacentHTML("afterend", `<td><li>Episode</li><li>${s} - ${e}</li></td>`);
       }
       async addPeerBar() {
           const target = document.querySelector("#description-ul td:last-child");
@@ -555,8 +558,8 @@ header #logo h1 img { max-width: 100px !important; }
           new VideoSync(videoElement, targetButton).listen();
       }
       onVisit() {
-          this.createVideo();
           this.stylise();
+          this.createVideo();
           this.addPeerBar();
           const key = this.getSeriesKey();
           if (!key) {
@@ -603,16 +606,22 @@ header #logo h1 img { max-width: 100px !important; }
       const number = parseInt(epText.substring(8));
       return new EpisodeInfo(getSeasonFromElement(element), number, name, link);
   }
-  function getEpisodeInfos() {
-      return Array.from(document.querySelectorAll("#season-wrapper ul > li")).map(epInfoFromElement);
+  async function getEpisodeInfos() {
+      const parent = await querySelectorWait("#season-wrapper ul");
+      return Array.from(parent.getElementsByTagName("li")).map(epInfoFromElement);
   }
-  function parseSeriesInfo() {
-      const episodes = getEpisodeInfos();
-      if (episodes.length == 0) {
-          alert("refusing to store no episodes");
+  async function parseSeriesInfo() {
+      const episodes = await getEpisodeInfos();
+      if (episodes.length === 0) {
           throw new Error("no episodes found!");
       }
       return new SeriesInfo(episodes);
+  }
+  async function ensureHasSeriesInfo(key) {
+      if (hasSeriesInfo(key))
+          return;
+      const info = await parseSeriesInfo();
+      saveSeriesInfo(key, info);
   }
   const URL_MATCH$1 = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;
   class OverviewPage {
@@ -631,19 +640,24 @@ header #logo h1 img { max-width: 100px !important; }
           if (!key) {
               throw new Error("no series key");
           }
-          if (!hasSeriesInfo(key)) {
-              const info = parseSeriesInfo();
-              saveSeriesInfo(key, info);
-          }
+          ensureHasSeriesInfo(key).catch(reason => alert("Couldn't load series info: " + reason));
       }
   }
+  //# sourceMappingURL=overview.js.map
 
   const pages = [new CommonPage(), new OverviewPage(), new EpisodePage()];
   const url = new URL(location.href);
   for (const page of pages) {
       if (page.matches(url)) {
-          page.onVisit();
+          try {
+              page.onVisit();
+          }
+          catch (e) {
+              console.exception(e);
+              alert("Something went wrong: " + e);
+          }
       }
   }
+  //# sourceMappingURL=main.js.map
 
 }());

@@ -5,6 +5,7 @@ import {
   saveSeriesInfo,
   SeriesInfo
 } from "../series";
+import { querySelectorWait } from "../utils";
 
 function getDirectText(element: Node): string {
   return Array.from(element.childNodes)
@@ -52,20 +53,27 @@ function epInfoFromElement(element: ParentNode & Node): EpisodeInfo {
   return new EpisodeInfo(getSeasonFromElement(element), number, name, link);
 }
 
-function getEpisodeInfos(): EpisodeInfo[] {
-  return Array.from(document.querySelectorAll("#season-wrapper ul > li")).map(
-    epInfoFromElement
-  );
+async function getEpisodeInfos(): Promise<EpisodeInfo[]> {
+  const parent = await querySelectorWait("#season-wrapper ul");
+
+  return Array.from(parent.getElementsByTagName("li")).map(epInfoFromElement);
 }
 
-function parseSeriesInfo(): SeriesInfo {
-  const episodes = getEpisodeInfos();
+async function parseSeriesInfo(): Promise<SeriesInfo> {
+  const episodes = await getEpisodeInfos();
+
   if (episodes.length === 0) {
-    alert("refusing to store no episodes");
     throw new Error("no episodes found!");
   }
 
   return new SeriesInfo(episodes);
+}
+
+async function ensureHasSeriesInfo(key: string): Promise<void> {
+  if (hasSeriesInfo(key)) return;
+
+  const info = await parseSeriesInfo();
+  saveSeriesInfo(key, info);
 }
 
 const URL_MATCH = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;
@@ -90,9 +98,8 @@ export class OverviewPage implements Page {
       throw new Error("no series key");
     }
 
-    if (!hasSeriesInfo(key)) {
-      const info = parseSeriesInfo();
-      saveSeriesInfo(key, info);
-    }
+    ensureHasSeriesInfo(key).catch(reason =>
+      alert("Couldn't load series info: " + reason)
+    );
   }
 }
