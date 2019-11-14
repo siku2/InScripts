@@ -56,7 +56,6 @@
       template.innerHTML = html.trim();
       return template.content.firstChild || undefined;
   }
-  //# sourceMappingURL=utils.js.map
 
   class CommonPage {
       styliseHeader() {
@@ -76,7 +75,6 @@
           this.styliseHeader();
       }
   }
-  //# sourceMappingURL=common.js.map
 
   class EpisodeInfo {
       constructor(season, number, name, link) {
@@ -131,7 +129,6 @@
       const raw = JSON.stringify(info.allEpisodes);
       sessionStorage.setItem(key, raw);
   }
-  //# sourceMappingURL=series.js.map
 
   function commonjsRequire () {
   	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
@@ -215,7 +212,7 @@
   },{"eventemitter3":"2JJl","./util":"BHXf","./logger":"8WOs","./socket":"wJlv","./mediaconnection":"dbHP","./dataconnection":"GBTQ","./enums":"9ZRY","./api":"in7L"}],"iTK6":[function(require,module,exports) {
   Object.defineProperty(exports,"__esModule",{value:!0});var e=require("./util"),r=require("./peer");exports.peerjs={Peer:r.Peer,util:e.util},exports.default=r.Peer,window.peerjs=exports.peerjs,window.Peer=r.Peer;
   },{"./util":"BHXf","./peer":"Hxpd"}]},{},["iTK6"]);
-  //# sourceMappingURL=/peerjs.min.js.map
+
   });
 
   var Peer = unwrapExports(peerjs_min);
@@ -240,7 +237,6 @@
           return new Promise(resolve => this.waiters.push(resolve));
       }
   }
-  //# sourceMappingURL=async-queue.js.map
 
   function sanitizeID(id) {
       return id
@@ -350,6 +346,8 @@
                   await new Promise(resolve => {
                       return this.videoEl.addEventListener("play", resolve, { once: true });
                   });
+              // fall through
+              case "PLAYING":
                   this.jwplayer.pause();
                   break;
           }
@@ -417,7 +415,6 @@
           }
       }
   }
-  //# sourceMappingURL=video-sync.js.map
 
   function getOverviewLink() {
       var _a, _b;
@@ -643,7 +640,6 @@ header #logo h1 img { max-width: 100px !important; }
           ensureHasSeriesInfo(key).catch(reason => alert("Couldn't load series info: " + reason));
       }
   }
-  //# sourceMappingURL=overview.js.map
 
   const pages = [new CommonPage(), new OverviewPage(), new EpisodePage()];
   const url = new URL(location.href);
@@ -658,6 +654,5 @@ header #logo h1 img { max-width: 100px !important; }
           }
       }
   }
-  //# sourceMappingURL=main.js.map
 
 }());

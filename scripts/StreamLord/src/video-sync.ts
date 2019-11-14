@@ -162,6 +162,8 @@ export class VideoSync {
         await new Promise(resolve => {
           return this.videoEl.addEventListener("play", resolve, { once: true });
         });
+      // fall through
+      case "PLAYING":
         this.jwplayer.pause();
         break;
     }
