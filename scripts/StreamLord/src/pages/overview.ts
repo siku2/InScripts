@@ -54,7 +54,7 @@ function epInfoFromElement(element: ParentNode & Node): EpisodeInfo {
 }
 
 async function getEpisodeInfos(): Promise<EpisodeInfo[]> {
-  const parent = await querySelectorWait("#season-wrapper ul");
+  const parent = await querySelectorWait("#season-wrapper");
 
   return Array.from(parent.getElementsByTagName("li")).map(epInfoFromElement);
 }

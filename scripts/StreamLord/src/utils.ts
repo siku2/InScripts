@@ -14,6 +14,9 @@ export async function querySelectorWait(
     parent = document;
   }
 
+  const element = parent.querySelector(selector);
+  if (element) return Promise.resolve(element);
+
   return new Promise(resolve => {
     const observer = new MutationObserver(() => {
       const element = parent.querySelector(selector);

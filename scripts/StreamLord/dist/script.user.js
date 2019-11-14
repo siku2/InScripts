@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.5
+// @version      0.3.6
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -26,6 +26,9 @@
       else {
           parent = document;
       }
+      const element = parent.querySelector(selector);
+      if (element)
+          return Promise.resolve(element);
       return new Promise(resolve => {
           const observer = new MutationObserver(() => {
               const element = parent.querySelector(selector);
@@ -604,7 +607,7 @@ header #logo h1 img { max-width: 100px !important; }
       return new EpisodeInfo(getSeasonFromElement(element), number, name, link);
   }
   async function getEpisodeInfos() {
-      const parent = await querySelectorWait("#season-wrapper ul");
+      const parent = await querySelectorWait("#season-wrapper");
       return Array.from(parent.getElementsByTagName("li")).map(epInfoFromElement);
   }
   async function parseSeriesInfo() {
