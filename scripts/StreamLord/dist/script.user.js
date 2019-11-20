@@ -1,7 +1,7 @@
 
 // ==UserScript==
 // @name         StreamLord
-// @version      0.3.6
+// @version      0.3.7
 // @author       siku2
 // @description  Turn StreamLord into a passable experience.
 // @source       https://github.com/siku2/InScripts/tree/master/scripts/StreamLord
@@ -428,7 +428,7 @@
       }
       return href;
   }
-  const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
+  const URL_MATCH = /^\/episode-(.+)-s(\d+)e(\d+)-\d+\.html$/;
   const CUSTOM_CSS = `
 .movie-summary { transition: filter 1s; }
 
@@ -623,7 +623,7 @@ header #logo h1 img { max-width: 100px !important; }
       const info = await parseSeriesInfo();
       saveSeriesInfo(key, info);
   }
-  const URL_MATCH$1 = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;
+  const URL_MATCH$1 = /^\/watch-tvshow-(.+)-\d+\.html$/;
   class OverviewPage {
       matches(url) {
           return URL_MATCH$1.test(url.pathname);

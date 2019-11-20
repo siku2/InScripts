@@ -76,7 +76,7 @@ async function ensureHasSeriesInfo(key: string): Promise<void> {
   saveSeriesInfo(key, info);
 }
 
-const URL_MATCH = /^\/watch-tvshow-([\w-]+)-\d+\.html$/;
+const URL_MATCH = /^\/watch-tvshow-(.+)-\d+\.html$/;
 
 export class OverviewPage implements Page {
   matches(url: URL): boolean {

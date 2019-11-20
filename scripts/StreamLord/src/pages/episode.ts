@@ -14,7 +14,7 @@ function getOverviewLink(): string {
   return href;
 }
 
-const URL_MATCH = /^\/episode-([\w-]+)-s(\d+)e(\d+)-\d+\.html$/;
+const URL_MATCH = /^\/episode-(.+)-s(\d+)e(\d+)-\d+\.html$/;
 
 const CUSTOM_CSS = `
 .movie-summary { transition: filter 1s; }
